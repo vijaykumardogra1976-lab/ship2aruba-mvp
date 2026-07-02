@@ -110,19 +110,4 @@ npm run dev
 | GET | `/api/client/orders/` | View current logged-in customer's orders |
 | GET | `/api/client/orders/{id}/` | Full timeline and item list of specific order |
 
----
 
-## 🌐 Deployment Configuration
-
-For production deployment, the codebase is fully compatible with modern hosting services:
-
-### Railway (Recommended)
-1. Link the root monorepo to Railway.
-2. Provision a **PostgreSQL Database** resource inside the project environment.
-3. Deploy the `backend` directory (set start command to `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT` and configure variables matching `backend/.env`).
-4. Deploy the `frontend` directory as a static site or Node application.
-
-### Render
-1. Deploy Django Backend as a *Web Service* using the custom Dockerfile or standard Python environment.
-2. Deploy the PostgreSQL database as a *Render PostgreSQL* instance.
-3. Deploy React frontend as a *Static Site*.
