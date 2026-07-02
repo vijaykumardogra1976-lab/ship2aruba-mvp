@@ -10,8 +10,7 @@ import { ItemsControlPanel } from "@/features/orders-viewer/components/ItemsCont
 // Client imports
 import { ClientAuthProvider } from "@/features/client-auth/hooks/useClientAuth";
 import { ClientLoginPage } from "@/features/client-auth/components/ClientLoginPage";
-import { ClientOtpPage } from "@/features/client-auth/components/ClientOtpPage";
-import { ClientSetPasswordPage } from "@/features/client-auth/components/ClientSetPasswordPage";
+import { ClientSignupPage } from "@/features/client-auth/components/ClientSignupPage";
 import { ClientLayout } from "@/features/client-portal/components/ClientLayout";
 import { ClientDashboardPage } from "@/features/client-portal/components/ClientDashboardPage";
 import { ClientOrdersPage } from "@/features/client-portal/components/ClientOrdersPage";
@@ -40,8 +39,7 @@ export function AppRoutes() {
             <Routes>
               {/* Auth */}
               <Route path="login" element={<ClientLoginPage />} />
-              <Route path="otp" element={<ClientOtpPage />} />
-              <Route path="set-password" element={<ClientSetPasswordPage />} />
+              <Route path="signup" element={<ClientSignupPage />} />
               {/* Protected portal */}
               <Route element={<ClientLayout />}>
                 <Route path="dashboard" element={<ClientDashboardPage />} />

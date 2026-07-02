@@ -46,7 +46,7 @@ export function LoginPage() {
   return (
     <div
       className="flex h-screen w-full overflow-hidden bg-[#f8fafc] text-[#1e293b]"
-      style={{ fontFamily: "'Inter', sans-serif" }}
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
       {/* Container holding both panels */}
       <div className="flex w-full h-full overflow-hidden">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { clientLogin } from "../api/clientAuthApi";
+import { clientSignup } from "../api/clientAuthApi";
 import { useClientAuth } from "../hooks/useClientAuth";
 import {
   Mail,
@@ -10,41 +10,56 @@ import {
   MapPin,
   CreditCard,
   Globe,
-  Briefcase,
+  User,
+  Phone,
   Lock,
-  UserPlus
 } from "lucide-react";
 
-export function ClientLoginPage() {
+export function ClientSignupPage() {
   const navigate = useNavigate();
   const { loginWithTokens } = useClientAuth();
   
-  const [identifier, setIdentifier] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!identifier.trim() || !password) {
-      setError("Please enter your email/phone and password.");
+    if (!name.trim()) {
+      setError("Please enter your name.");
       return;
     }
+    if (!email.trim() && !phone.trim()) {
+      setError("Please enter at least an email or phone number.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     setError("");
     setIsLoading(true);
     try {
-      const res = await clientLogin({ 
-        identifier: identifier.trim(),
-        password 
+      const res = await clientSignup({
+        name: name.trim(),
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        password,
       });
       if (res.access && res.refresh) {
         await loginWithTokens(res.access, res.refresh);
         navigate("/client/dashboard");
+      } else {
+        navigate("/client/login");
       }
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ?? "Invalid credentials. Please try again.";
+          ?.detail ?? "Signup failed. Please try again.";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -56,9 +71,8 @@ export function ClientLoginPage() {
       className="flex h-screen w-full overflow-hidden bg-[#f8fafc] text-[#1e293b]"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
-      {/* Container holding both panels */}
       <div className="flex w-full h-full overflow-hidden">
-        {/* LEFT PANEL: Branding & Info (Hidden on small mobile, shows on lg) */}
+        {/* LEFT PANEL */}
         <div
           className="relative hidden w-1/2 flex-col justify-between bg-cover bg-center p-8 lg:flex"
           style={{
@@ -66,7 +80,6 @@ export function ClientLoginPage() {
               "linear-gradient(to right, rgba(248, 250, 252, 0.95) 50%, rgba(248, 250, 252, 0.7) 100%), url('https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?auto=format&fit=crop&w=1200&q=80')",
           }}
         >
-          {/* Logo & Header */}
           <div className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#7c3aed] text-white shadow-sm">
               <span className="text-xl font-bold">🚢</span>
@@ -83,7 +96,6 @@ export function ClientLoginPage() {
             </div>
           </div>
 
-          {/* Marketing/Hero Info */}
           <div className="my-auto max-w-md space-y-6 py-6">
             <div className="space-y-3">
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
@@ -91,12 +103,10 @@ export function ClientLoginPage() {
                 Your <span className="text-[#7c3aed]">Shipments.</span>
               </h1>
               <p className="text-sm leading-relaxed text-slate-600 font-medium">
-                Access your customer portal to view real-time tracking status, view invoices,
-                and manage payments easily.
+                Create an account to track your orders, view invoices, and stay updated.
               </p>
             </div>
 
-            {/* Feature Highlights */}
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-violet-100 bg-white text-[#7c3aed] shadow-sm">
@@ -159,47 +169,83 @@ export function ClientLoginPage() {
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.03)] sm:p-6">
               <div className="mb-5">
                 <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#7c3aed]">
-                  Welcome Back
+                  Get Started
                 </span>
                 <h2 className="mt-0.5 text-xl font-extrabold tracking-tight text-slate-900">
-                  Client Login
+                  Client Signup
                 </h2>
                 <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                  Sign in with your email or phone number and password
+                  Create an account to manage your shipments
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500" htmlFor="identifier">
-                    Email or Phone Number
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500" htmlFor="name">
+                    Full Name *
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                    <User className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                     <input
-                      id="identifier"
+                      id="name"
                       type="text"
-                      autoComplete="username"
-                      placeholder="e.g. name@email.com or +297 5901234"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="e.g. John Doe"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       disabled={isLoading}
                       className="w-full rounded-xl border border-slate-200 focus:border-[#7c3aed] focus:ring-violet-100 bg-white py-2.5 pl-10 pr-3 text-xs text-slate-800 outline-none transition-all focus:ring-4"
                     />
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500" htmlFor="email">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="email"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full rounded-xl border border-slate-200 focus:border-[#7c3aed] focus:ring-violet-100 bg-white py-2.5 pl-10 pr-3 text-xs text-slate-800 outline-none transition-all focus:ring-4"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500" htmlFor="phone">
+                      Phone
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        id="phone"
+                        type="text"
+                        placeholder="+297 5901234"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full rounded-xl border border-slate-200 focus:border-[#7c3aed] focus:ring-violet-100 bg-white py-2.5 pl-10 pr-3 text-xs text-slate-800 outline-none transition-all focus:ring-4"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500" htmlFor="password">
-                    Password
+                    Password *
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                     <input
                       id="password"
                       type="password"
-                      autoComplete="current-password"
-                      placeholder="Enter your password"
+                      placeholder="At least 8 characters"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
@@ -220,53 +266,22 @@ export function ClientLoginPage() {
                   className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#7c3aed] py-3 text-xs font-bold text-white shadow-md shadow-violet-600/5 hover:bg-[#6d28d9] active:scale-[0.99] disabled:opacity-75 disabled:scale-100 transition-all cursor-pointer"
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
-                  <span>{isLoading ? "Signing In..." : "Sign In"}</span>
+                  <span>{isLoading ? "Creating Account..." : "Create Account"}</span>
                 </button>
               </form>
 
-              <div className="relative my-4 flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-100" />
-                </div>
-                <span className="relative bg-white px-2 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                  New Here?
+              <div className="mt-4 text-center">
+                <span className="text-xs font-semibold text-slate-500">
+                  Already have an account?{" "}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => navigate("/client/login")}
+                  className="text-xs font-bold text-[#7c3aed] hover:underline"
+                >
+                  Sign In
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => navigate("/client/signup")}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-700 transition-all cursor-pointer mb-3"
-              >
-                <UserPlus className="h-3.5 w-3.5" />
-                Create an Account
-              </button>
-
-              <div className="relative my-4 flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-100" />
-                </div>
-                <span className="relative bg-white px-2 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                  OR
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => navigate("/login")}
-                className="flex w-full items-center justify-between rounded-xl bg-violet-50/30 hover:bg-violet-50 border border-violet-100/50 px-3.5 py-3 text-xs font-bold text-[#7c3aed] transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-3.5 w-3.5" />
-                  <div className="text-left">
-                    <span className="block font-extrabold leading-none">Login as Staff / Employee</span>
-                    <span className="block text-[9px] font-medium text-slate-400 mt-0.5 leading-none">
-                      Access orders management & admin settings
-                    </span>
-                  </div>
-                </div>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
             </div>
           </div>
 

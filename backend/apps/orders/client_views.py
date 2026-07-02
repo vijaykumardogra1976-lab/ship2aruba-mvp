@@ -68,6 +68,25 @@ def _serialize_order(order) -> dict:
     except Exception:
         invoice_number = None
 
+    status = raw_status
+    is_received = True
+    is_paid = order.paid_amount > 0 or status in [OrderStatus.APPROVED, OrderStatus.PROCESSING, OrderStatus.READY_FOR_PICKUP, OrderStatus.COMPLETED]
+    
+    # If the order is a procurement (Amazon/eBay), it requires the purchased flag. 
+    # Otherwise (other forwarding), it's purchased automatically.
+    is_purchased = is_paid and (
+        order.is_az_ordered or 
+        order.website_type not in ["amazon", "ebay"] or 
+        status in [OrderStatus.PROCESSING, OrderStatus.READY_FOR_PICKUP, OrderStatus.COMPLETED]
+    )
+    
+    is_in_warehouse = is_purchased and (order.is_in_myus or status in [OrderStatus.READY_FOR_PICKUP, OrderStatus.COMPLETED])
+    is_packed = is_in_warehouse and (order.is_uploaded or status in [OrderStatus.READY_FOR_PICKUP, OrderStatus.COMPLETED])
+    is_shipped = is_packed and (status in [OrderStatus.READY_FOR_PICKUP, OrderStatus.COMPLETED])
+    is_customs = is_shipped and (status in [OrderStatus.READY_FOR_PICKUP, OrderStatus.COMPLETED])
+    is_out_for_delivery = is_customs and (status in [OrderStatus.READY_FOR_PICKUP, OrderStatus.COMPLETED])
+    is_delivered = is_out_for_delivery and (status == OrderStatus.COMPLETED or order.is_completed)
+
     return {
         "id": order.id,
         "order_number": order.order_number,
@@ -87,15 +106,15 @@ def _serialize_order(order) -> dict:
         "status_label": STATUS_LABELS.get(raw_status, raw_status),
         "status_color": STATUS_COLORS.get(raw_status, "gray"),
         "progress": {
-            "order_received": True,
-            "payment_confirmed": order.paid_amount > 0,
-            "purchased": order.is_az_ordered,
-            "arrived_warehouse": order.is_in_myus,
-            "packing": order.is_uploaded,
-            "shipped": False,
-            "customs": False,
-            "out_for_delivery": False,
-            "delivered": order.is_completed,
+            "order_received": is_received,
+            "payment_confirmed": is_paid,
+            "purchased": is_purchased,
+            "arrived_warehouse": is_in_warehouse,
+            "packing": is_packed,
+            "shipped": is_shipped,
+            "customs": is_customs,
+            "out_for_delivery": is_out_for_delivery,
+            "delivered": is_delivered,
         },
         "invoice_number": invoice_number,
         "items": [
@@ -193,6 +212,8 @@ class ClientDashboardView(APIView):
                 "in_transit": in_transit,
                 "delivered": delivered,
                 "pending_payment": pending_payment_count,
+                "total": orders.count(),
+                "cancelled": orders.filter(current_status=OrderStatus.CANCELLED).count(),
             },
             "monthly_orders": monthly_data,
             "recent_orders": recent_serialized,
@@ -347,6 +368,8 @@ class ClientPaymentsView(APIView):
                 "remaining_balance": str(o.remaining_balance),
                 "current_status": o.current_status,
                 "status_label": STATUS_LABELS.get(o.current_status, o.current_status),
+                "order_date": o.order_date,
+                "number_of_items": o.number_of_items,
             }
             for o in pending_orders
         ]

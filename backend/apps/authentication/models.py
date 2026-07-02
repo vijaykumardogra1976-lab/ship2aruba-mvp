@@ -54,41 +54,4 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         return f"{self.first_name} {self.last_name}".strip() or self.email
 
 
-class IdentifierType(models.TextChoices):
-    EMAIL = "email", "Email"
-    PHONE = "phone", "Phone"
 
-
-class ClientOTP(models.Model):
-    """
-    OTP tokens for client (customer) login.
-
-    Designed for extensibility:
-    - identifier_type lets us support SMS in future without schema changes.
-    - Delivery is handled by a pluggable OTPDeliveryBackend (see otp_backends.py).
-    - OTP codes are stored hashed — never in plaintext.
-    """
-
-    customer = models.ForeignKey(
-        "customers.Customer",
-        on_delete=models.CASCADE,
-        related_name="otps",
-    )
-    identifier = models.CharField(max_length=255)          # email or phone value
-    identifier_type = models.CharField(
-        max_length=10, choices=IdentifierType.choices, default=IdentifierType.EMAIL
-    )
-    code_hash = models.CharField(max_length=128)           # SHA-256 hash of the code
-    expires_at = models.DateTimeField()
-    is_used = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = "client_otps"
-        ordering = ["-created_at"]
-
-    def is_valid(self) -> bool:
-        return not self.is_used and self.expires_at > timezone.now()
-
-    def __str__(self):
-        return f"OTP for {self.identifier} ({'used' if self.is_used else 'active'})"

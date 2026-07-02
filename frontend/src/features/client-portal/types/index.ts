@@ -75,6 +75,8 @@ export interface DashboardStats {
   in_transit: number;
   delivered: number;
   pending_payment: number;
+  total?: number;
+  cancelled?: number;
 }
 
 export interface MonthlyOrderData {
@@ -106,6 +108,8 @@ export interface PendingPaymentOrder {
   remaining_balance: string;
   current_status: string;
   status_label: string;
+  order_date: string;
+  number_of_items: number;
 }
 
 export interface PaymentsData {

@@ -34,7 +34,7 @@ export function ClientLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* Sidebar — desktop */}
       <aside className="hidden lg:flex flex-col flex-shrink-0">
         <ClientSidebar />
@@ -86,7 +86,7 @@ export function ClientLayout() {
               {/* Name — hidden on mobile */}
               <div className="hidden sm:flex flex-col items-start">
                 <span className="text-sm font-semibold text-gray-900 leading-none">{user?.name}</span>
-                <span className="text-[11px] text-gray-400 leading-none mt-0.5">{user?.phone || user?.email}</span>
+                <span className="text-[11px] text-slate-500 font-medium leading-none mt-0.5">{user?.phone || user?.email}</span>
               </div>
               {/* Chevron */}
               <svg

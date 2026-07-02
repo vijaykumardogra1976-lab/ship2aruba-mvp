@@ -1,16 +1,8 @@
 import {
-  BarChart3,
-  FileText,
   Headphones,
-  Home,
   LayoutGrid,
   LogOut,
-  MapPin,
   PlusSquare,
-  Settings,
-  Upload,
-  UserPlus,
-  Users,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -35,11 +27,11 @@ function NavItem({
 }) {
   const Icon = item.icon;
   const baseClass = cn(
-    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
     active
       ? "bg-violet-50 text-violet-700 font-semibold border-l-[3px] border-violet-600 rounded-l-none"
       : item.enabled
-        ? "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+        ? "text-slate-700 font-normal hover:bg-slate-50 hover:text-slate-900"
         : "cursor-default text-slate-400/80",
   );
 
@@ -86,7 +78,7 @@ function NavSection({
 }) {
   return (
     <div className="space-y-1">
-      <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400/80">
+      <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
         {title}
       </p>
       {items.map((item) => (
@@ -133,35 +125,13 @@ export function AppSidebar() {
       to: "/orders/new",
       enabled: true,
     },
-    { label: "Bulk Upload", icon: Upload, enabled: false },
-    { label: "My Orders", icon: Users, enabled: false },
-  ];
-
-  const customerItems: NavItemDef[] = [
-    { label: "All Customers", icon: Users, enabled: false },
-    { label: "New Customer", icon: UserPlus, enabled: false },
-    { label: "Customer Groups", icon: Users, enabled: false },
-  ];
-
-  const toolItems: NavItemDef[] = [
-    { label: "Reports", icon: BarChart3, enabled: false },
-    { label: "Invoices", icon: FileText, enabled: false },
-    { label: "Tracking", icon: MapPin, enabled: false },
-    { label: "Settings", icon: Settings, enabled: false },
   ];
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
       {/* Sidebar Navigation Items */}
       <div className="flex-grow overflow-y-auto px-3 py-6 space-y-6">
-        <NavItem
-          item={{ label: "Dashboard", icon: Home, enabled: false }}
-          active={false}
-        />
-
         <NavSection title="Orders" items={orderItems} activePath={pathname} />
-        <NavSection title="Customers" items={customerItems} activePath={pathname} />
-        <NavSection title="Tools" items={toolItems} activePath={pathname} />
       </div>
 
       {/* Help & Contact Support */}
@@ -195,7 +165,7 @@ export function AppSidebar() {
             <p className="truncate text-xs font-semibold text-slate-800" title={user.email}>
               {user.full_name || user.email.split("@")[0]}
             </p>
-            <p className="truncate text-[10px] text-slate-400">
+            <p className="truncate text-[10px] text-slate-500 font-medium">
               Staff Portal
             </p>
           </div>
