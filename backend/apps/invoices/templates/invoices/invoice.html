@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #333333; background: #ffffff; }
+    .invoice-wrap { padding: 40px; max-width: 720px; margin: 0 auto; }
+
+    /* Header */
+    .inv-header { display: table; width: 100%; border-bottom: 2px solid #1a1a1a; padding-bottom: 20px; margin-bottom: 28px; }
+    .inv-header-left { display: table-cell; vertical-align: top; }
+    .inv-header-right { display: table-cell; text-align: right; vertical-align: top; }
+    .brand-name { font-size: 24px; font-weight: bold; color: #1a1a1a; }
+    .brand-sub { font-size: 12px; color: #777777; margin-top: 4px; }
+    .inv-title { font-size: 22px; font-weight: bold; color: #1a1a1a; }
+    .inv-meta { font-size: 12px; color: #555555; margin-top: 6px; line-height: 1.7; }
+
+    /* Parties */
+    .parties { display: table; width: 100%; margin-bottom: 28px; }
+    .party-col { display: table-cell; width: 50%; vertical-align: top; }
+    .party-label { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px; color: #999999; margin-bottom: 8px; }
+    .party-name { font-size: 14px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px; }
+    .party-detail { font-size: 12px; color: #555555; line-height: 1.6; }
+
+    /* Table */
+    table.items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    table.items thead tr { background: #f5f5f5; }
+    table.items th { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #777777; padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0e0; border-top: 1px solid #e0e0e0; }
+    table.items td { padding: 14px 14px; font-size: 13px; color: #333333; border-bottom: 1px solid #eeeeee; vertical-align: top; }
+    .item-name { font-weight: bold; color: #1a1a1a; }
+    .item-sub { font-size: 12px; color: #888888; margin-top: 3px; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+
+    /* Totals */
+    .totals-wrap { text-align: right; }
+    .totals-table { display: inline-table; min-width: 260px; }
+    .totals-row { display: table-row; }
+    .totals-label { display: table-cell; padding: 5px 20px 5px 0; font-size: 13px; color: #555555; }
+    .totals-val { display: table-cell; padding: 5px 0; font-size: 13px; color: #333333; text-align: right; }
+    .totals-divider { border: none; border-top: 1px solid #e0e0e0; margin: 10px 0; }
+    .totals-due-label { font-size: 15px; font-weight: bold; color: #1a1a1a; }
+    .totals-due-val { font-size: 15px; font-weight: bold; color: #1a1a1a; text-align: right; }
+
+    /* Footer */
+    .inv-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 12px; color: #999999; line-height: 1.6; }
+  </style>
+</head>
+<body>
+<div class="invoice-wrap">
+
+  <!-- Header -->
+  <div class="inv-header">
+    <div class="inv-header-left">
+      <div class="brand-name">Ship2Aruba</div>
+      <div class="brand-sub">{{ company_address }}<br>Tel: {{ company_phone }}</div>
+    </div>
+    <div class="inv-header-right">
+      <div class="inv-title">INVOICE</div>
+      <div class="inv-meta">
+        <strong>Invoice No:</strong> {{ invoice_number }}<br>
+        <strong>Order No:</strong> {{ order_number }}<br>
+        <strong>Date:</strong> {{ issued_at|date:"d F Y" }}<br>
+        <strong>Payment Method:</strong> {{ payment_method }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Bill To / Bill From -->
+  <div class="parties">
+    <div class="party-col">
+      <div class="party-label">Bill To</div>
+      <div class="party-name">{{ customer_name }}</div>
+      <div class="party-detail">
+        {{ customer_phone }}<br>
+        {% if customer_email %}{{ customer_email }}{% endif %}
+      </div>
+    </div>
+    <div class="party-col" style="text-align:right;">
+      <div class="party-label">Bill From</div>
+      <div class="party-name">{{ company_name }}</div>
+      <div class="party-detail">
+        {{ company_address }}<br>
+        {{ company_phone }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Line Items -->
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="text-center">Qty</th>
+        <th class="text-right">Unit Price</th>
+        <th class="text-right">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>
+          <div class="item-name">{{ item.label }}</div>
+          <div class="item-sub">Shipped to Aruba</div>
+        </td>
+        <td class="text-center">{{ item.quantity }}</td>
+        <td class="text-right">{{ item.unit_price }} AWG</td>
+        <td class="text-right">{{ item.line_total }} AWG</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td>
+          <div class="item-name">Ship2Aruba Order</div>
+          <div class="item-sub">{{ number_of_items }} item(s) · Shipped to Aruba</div>
+        </td>
+        <td class="text-center">1</td>
+        <td class="text-right">{{ items_total }} AWG</td>
+        <td class="text-right">{{ items_total }} AWG</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  <div class="totals-wrap">
+    <div class="totals-table">
+      <div class="totals-row">
+        <div class="totals-label">Subtotal</div>
+        <div class="totals-val">{{ subtotal }} AWG</div>
+      </div>
+      <div class="totals-row">
+        <div class="totals-label">Amount Paid</div>
+        <div class="totals-val">{{ paid }} AWG</div>
+      </div>
+    </div>
+    <hr class="totals-divider">
+    <div class="totals-table">
+      <div class="totals-row">
+        <div class="totals-label totals-due-label">Amount Due</div>
+        <div class="totals-val totals-due-val">{{ remaining_balance }} AWG</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="inv-footer">
+    Thank you for your business. If you have any questions regarding this invoice, please contact us at {{ company_phone }} or visit us at {{ company_address }}.
+  </div>
+
+</div>
+</body>
+</html>

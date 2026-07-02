@@ -1,0 +1,152 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-background: #f8fafc;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-primary: #2563eb;
+  --color-primary-foreground: #ffffff;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-border: #e2e8f0;
+  --color-accent: #eff6ff;
+  --color-destructive: #ef4444;
+  --color-success: #16a34a;
+  --radius-lg: 0.75rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .invoice-print,
+  .invoice-print * { visibility: visible; }
+  .invoice-print { position: absolute; left: 0; top: 0; width: 100%; }
+}
+
+/* ==========================================================================
+   CLIENT AUTH STYLES
+   Using plain CSS — Tailwind v4 @apply does not support responsive prefixes
+   ========================================================================== */
+
+.client-auth-bg {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background-color: #F3F4F6;
+  padding: 1rem;
+}
+
+.client-auth-card {
+  width: 100%;
+  max-width: 28rem;
+  border-radius: 1rem;
+  background-color: #ffffff;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.client-auth-logo {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.client-auth-logo-icon { font-size: 1.875rem; }
+.client-auth-logo-text { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; color: #111827; }
+.client-auth-title { margin-bottom: 0.5rem; text-align: center; font-size: 1.5rem; font-weight: 700; color: #111827; }
+.client-auth-subtitle { margin-bottom: 2rem; text-align: center; font-size: 0.875rem; color: #6B7280; }
+.client-auth-form { display: flex; flex-direction: column; gap: 1.25rem; }
+.client-field { display: flex; flex-direction: column; gap: 0.375rem; }
+.client-label { font-size: 0.875rem; font-weight: 600; color: #374151; }
+
+.client-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #D1D5DB;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.client-input:focus { border-color: #7C3AED; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1); }
+.client-input:disabled { background-color: #F9FAFB; color: #9CA3AF; }
+
+.client-btn-primary {
+  margin-top: 0.5rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  background-color: #7C3AED;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s;
+}
+.client-btn-primary:hover { background-color: #6D28D9; }
+.client-btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.client-btn-ghost {
+  margin-top: 1rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: none;
+  background: transparent;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s, color 0.15s;
+}
+.client-btn-ghost:hover { background-color: #F9FAFB; color: #111827; }
+
+.client-error { border-radius: 0.5rem; background-color: #FEF2F2; padding: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #DC2626; }
+.client-link { font-weight: 600; color: #7C3AED; text-decoration: none; }
+.client-link:hover { color: #6D28D9; text-decoration: underline; }
+.client-auth-footer { margin-top: 2rem; text-align: center; font-size: 0.875rem; color: #6B7280; }
+
+/* OTP */
+.otp-input-row { margin-bottom: 1.5rem; display: flex; justify-content: space-between; gap: 0.5rem; }
+.otp-digit-input {
+  height: 3.5rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1.5px solid #D1D5DB;
+  background-color: #fff;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.otp-digit-input:focus { border-color: #7C3AED; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1); }
+.otp-resend-row { margin-top: 1rem; text-align: center; font-size: 0.875rem; }
+.otp-resend-timer { font-weight: 500; color: #6B7280; }
+.otp-resend-btn { background: transparent; border: none; padding: 0; cursor: pointer; font-family: inherit; }
