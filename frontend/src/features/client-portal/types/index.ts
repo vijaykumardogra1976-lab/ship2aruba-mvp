@@ -60,6 +60,7 @@ export interface ClientOrderItem {
   tracking_number: string;
   fedex_tracking_number: string;
   image_url: string;
+  product_image: string | null;
 }
 
 

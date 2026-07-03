@@ -101,8 +101,19 @@
       {% for item in items %}
       <tr>
         <td>
-          <div class="item-name">{{ item.label }}</div>
-          <div class="item-sub">Shipped to Aruba</div>
+          <table style="width: 100%; border: none; padding: 0; margin: 0;">
+            <tr>
+              {% if item.image_url %}
+              <td style="width: 50px; vertical-align: top; border: none; padding: 0;">
+                <img src="{{ item.image_url }}" alt="Item" style="width: 40px; height: 40px; border-radius: 4px;" />
+              </td>
+              {% endif %}
+              <td style="vertical-align: top; border: none; padding: 0;">
+                <div class="item-name">{{ item.label }}</div>
+                <div class="item-sub">Shipped to Aruba</div>
+              </td>
+            </tr>
+          </table>
         </td>
         <td class="text-center">{{ item.quantity }}</td>
         <td class="text-right">{{ item.unit_price }} AWG</td>

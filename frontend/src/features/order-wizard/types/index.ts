@@ -42,6 +42,7 @@ export interface CreateOrderPayload {
   is_urgent: boolean;
   internal_notes: string;
   client_notes: string;
+  send_email?: boolean;
 }
 
 export interface OrderResponse {

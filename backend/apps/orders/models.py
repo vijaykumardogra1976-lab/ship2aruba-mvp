@@ -63,6 +63,7 @@ class OrderItem(TimeStampedModel):
     tracking_number = models.CharField(max_length=100, blank=True, default="")
     fedex_tracking_number = models.CharField(max_length=100, blank=True, default="")
     image_url = models.URLField(max_length=1000, blank=True, default="")
+    product_image = models.ImageField(upload_to="order_items/", null=True, blank=True)
     is_in_myus = models.BooleanField(default=False)
     is_ready_for_pickup = models.BooleanField(default=False)
     is_delivered = models.BooleanField(default=False)

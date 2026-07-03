@@ -1,10 +1,10 @@
 export function calculateRemainingBalance(
-  itemsTotal: number | "",
-  paidAmount: number | "",
+  itemsTotal: number | string | "",
+  paidAmount: number | string | "",
 ): number {
-  const total = typeof itemsTotal === "number" ? itemsTotal : 0;
-  const paid = typeof paidAmount === "number" ? paidAmount : 0;
-  return Math.max(0, total - paid);
+  const total = itemsTotal === "" ? 0 : Number(itemsTotal);
+  const paid = paidAmount === "" ? 0 : Number(paidAmount);
+  return Math.max(0, (isNaN(total) ? 0 : total) - (isNaN(paid) ? 0 : paid));
 }
 
 export function getTodayDateString(): string {
@@ -12,7 +12,7 @@ export function getTodayDateString(): string {
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
+  return `${year}-${month}-${day}`;
 }
 
 export function toApiDate(displayDate: string): string {

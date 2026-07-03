@@ -65,7 +65,7 @@ export function ClientOrderDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-7xl animate-pulse">
+      <div className="space-y-4 max-w-7xl mx-auto animate-pulse">
         <div className="h-6 w-32 rounded-xl bg-slate-200" />
         <div className="h-20 rounded-3xl bg-slate-100" />
         <div className="grid gap-4 lg:grid-cols-3">
@@ -111,7 +111,7 @@ export function ClientOrderDetailPage() {
   }, -1);
 
   return (
-    <div className="space-y-5 max-w-7xl text-[#1e293b] font-sans">
+    <div className="space-y-5 max-w-7xl mx-auto text-[#1e293b] font-sans">
       
       {/* Top Navigation Row */}
       <div className="flex items-center justify-between">
@@ -262,9 +262,9 @@ export function ClientOrderDetailPage() {
                   key={item.id}
                   className="rounded-2xl border border-slate-50 bg-white p-3.5 flex items-center gap-3.5 shadow-xs hover:border-slate-100 transition-colors"
                 >
-                  <div className="h-11 w-11 rounded-xl bg-slate-50 border border-slate-100 flex-shrink-0 flex items-center justify-center text-lg overflow-hidden">
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.label} className="h-full w-full object-cover" />
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50 relative group">
+                    {item.product_image || item.image_url ? (
+                      <img src={item.product_image || item.image_url} alt={item.label} className="h-full w-full object-cover" />
                     ) : (
                       <Package className="h-5 w-5 text-slate-400" />
                     )}

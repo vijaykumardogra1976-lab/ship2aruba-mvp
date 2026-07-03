@@ -153,6 +153,9 @@ COMPANY_PHONE = os.getenv("COMPANY_PHONE", "592-4222")
 
 ORDER_EDIT_AUTHORIZATION_PASSWORD = os.getenv("ORDER_EDIT_AUTHORIZATION_PASSWORD", "admin123")
 
+# ─── AI Document Parser ───────────────────────────────────────────────────────
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
 # ─── Client OTP Configuration ──────────────────────────────────────────────
 # Change this to "apps.authentication.otp_backends.SmsOTPBackend" when SMS is ready.
 OTP_DELIVERY_BACKEND = os.getenv(

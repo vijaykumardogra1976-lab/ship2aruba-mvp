@@ -32,6 +32,7 @@ class OrderCreateSerializer(serializers.Serializer):
     is_urgent = serializers.BooleanField(default=False)
     internal_notes = serializers.CharField(required=False, allow_blank=True, default="")
     client_notes = serializers.CharField(required=False, allow_blank=True, default="")
+    send_email = serializers.BooleanField(default=True, required=False)
 
     def validate_customer_id(self, value):
         if not Customer.objects.filter(pk=value).exists():
@@ -188,6 +189,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "tracking_number",
             "fedex_tracking_number",
             "image_url",
+            "product_image",
             "is_in_myus",
             "is_ready_for_pickup",
             "is_delivered",

@@ -5,7 +5,6 @@ import {
   step2Schema,
   step3Schema,
   step4Schema,
-  step5Schema,
 } from "../schema/orderSchema";
 import type { OrderFormData } from "../types";
 
@@ -15,7 +14,6 @@ const STEP_SCHEMAS = [
   step2Schema,
   step3Schema,
   step4Schema,
-  step5Schema,
 ] as const;
 
 export function useOrderWizard(form: UseFormReturn<OrderFormData>) {
@@ -37,7 +35,7 @@ export function useOrderWizard(form: UseFormReturn<OrderFormData>) {
 
   const goNext = () => {
     if (!validateStep(step)) return false;
-    setStep((s) => Math.min(s + 1, 6));
+    setStep((s) => Math.min(s + 1, 5));
     return true;
   };
 

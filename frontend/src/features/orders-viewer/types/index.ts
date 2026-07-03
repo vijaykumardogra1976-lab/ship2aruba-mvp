@@ -62,6 +62,7 @@ export interface OrderItemRow {
   tracking_number: string;
   fedex_tracking_number: string;
   image_url: string;
+  product_image: string | null;
   is_in_myus: boolean;
   is_ready_for_pickup: boolean;
   is_delivered: boolean;

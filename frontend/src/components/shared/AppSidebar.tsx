@@ -1,8 +1,16 @@
 import {
+  BarChart3,
+  FileText,
   Headphones,
+  Home,
   LayoutGrid,
   LogOut,
+  MapPin,
   PlusSquare,
+  Settings,
+  Upload,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -78,7 +86,7 @@ function NavSection({
 }) {
   return (
     <div className="space-y-1">
-      <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+      <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400/80">
         {title}
       </p>
       {items.map((item) => (
@@ -125,13 +133,35 @@ export function AppSidebar() {
       to: "/orders/new",
       enabled: true,
     },
+    { label: "Bulk Upload", icon: Upload, enabled: false },
+    { label: "My Orders", icon: Users, enabled: false },
+  ];
+
+  const customerItems: NavItemDef[] = [
+    { label: "All Customers", icon: Users, enabled: false },
+    { label: "New Customer", icon: UserPlus, enabled: false },
+    { label: "Customer Groups", icon: Users, enabled: false },
+  ];
+
+  const toolItems: NavItemDef[] = [
+    { label: "Reports", icon: BarChart3, enabled: false },
+    { label: "Invoices", icon: FileText, enabled: false },
+    { label: "Tracking", icon: MapPin, enabled: false },
+    { label: "Settings", icon: Settings, enabled: false },
   ];
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
       {/* Sidebar Navigation Items */}
       <div className="flex-grow overflow-y-auto px-3 py-6 space-y-6">
+        <NavItem
+          item={{ label: "Dashboard", icon: Home, enabled: false }}
+          active={false}
+        />
+
         <NavSection title="Orders" items={orderItems} activePath={pathname} />
+        <NavSection title="Customers" items={customerItems} activePath={pathname} />
+        <NavSection title="Tools" items={toolItems} activePath={pathname} />
       </div>
 
       {/* Help & Contact Support */}
@@ -139,7 +169,7 @@ export function AppSidebar() {
         <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-4">
           <div className="mb-2 flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100">
-              <Headphones className="h-4 w-4 text-violet-600" />
+              <Headphones className="h-4 w-4 text-violet-650" />
             </div>
             <p className="text-xs font-bold text-slate-800">Need Help?</p>
           </div>

@@ -24,13 +24,10 @@ export const step3Schema = z.object({
   payment_amount: z.coerce.number().min(0),
   items_total: positiveNumber,
   paid_amount: z.coerce.number().min(0),
-});
-
-export const step4Schema = z.object({
   payment_method: z.enum(["cash", "pin", "transfer"]),
 });
 
-export const step5Schema = z.object({
+export const step4Schema = z.object({
   is_new_client: z.boolean(),
   is_urgent: z.boolean(),
   internal_notes: z.string(),
@@ -41,7 +38,6 @@ export const orderSchema = step1Schema
   .merge(step2Schema)
   .merge(step3Schema)
   .merge(step4Schema)
-  .merge(step5Schema)
   .refine((data) => data.paid_amount <= data.items_total, {
     message: "Paid amount cannot exceed items total",
     path: ["paid_amount"],
@@ -52,7 +48,6 @@ export type OrderFormValues = z.infer<typeof orderSchema>;
 export const STEP_FIELDS: Record<number, (keyof OrderFormValues)[]> = {
   1: ["customer"],
   2: ["website_type", "website", "order_date", "number_of_items", "amount_usd"],
-  3: ["payment_type", "payment_amount", "items_total", "paid_amount"],
-  4: ["payment_method"],
-  5: ["is_new_client", "is_urgent", "internal_notes", "client_notes"],
+  3: ["payment_type", "payment_amount", "items_total", "paid_amount", "payment_method"],
+  4: ["is_new_client", "is_urgent", "internal_notes", "client_notes"],
 };

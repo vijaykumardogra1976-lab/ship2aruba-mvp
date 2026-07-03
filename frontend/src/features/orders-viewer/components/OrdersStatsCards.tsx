@@ -1,31 +1,6 @@
-import { CheckCircle2, Clock, ShoppingBag, Users, Wallet } from "lucide-react";
+import { Box, CreditCard, Clock, TrendingUp, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OrderListItem } from "../types";
-
-function Sparkline({ color }: { color: string }) {
-  return (
-    <svg
-      viewBox="0 0 80 32"
-      className="h-8 w-20 shrink-0"
-      aria-hidden
-    >
-      <path
-        d="M0 24 L12 18 L24 22 L36 10 L48 14 L60 6 L72 12 L80 4"
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.7"
-      />
-      <path
-        d="M0 24 L12 18 L24 22 L36 10 L48 14 L60 6 L72 12 L80 4 L80 32 L0 32 Z"
-        fill={color}
-        opacity="0.08"
-      />
-    </svg>
-  );
-}
 
 function formatCurrencyDisplay(value: number) {
   return `${value.toLocaleString("en-US", {
@@ -35,20 +10,36 @@ function formatCurrencyDisplay(value: number) {
 }
 
 export function computeOrderStats(orders: OrderListItem[]) {
-  const totalValue = orders.reduce(
+  const totalOrders = orders.length;
+  
+  const totalRevenue = orders.reduce(
     (sum, o) => sum + parseFloat(o.items_total || "0"),
     0,
   );
-  const pending = orders.filter((o) => !o.is_completed).length;
-  const completed = orders.filter((o) => o.is_completed).length;
-  const uniqueCustomers = new Set(orders.map((o) => o.customer.id)).size;
+  
+  const paidAmount = orders.reduce(
+    (sum, o) => sum + parseFloat(o.paid_amount || "0"),
+    0,
+  );
+  
+  const pendingAmount = orders.reduce(
+    (sum, o) => sum + parseFloat(o.remaining_balance || "0"),
+    0,
+  );
+
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+  const paidPercent = totalRevenue > 0 ? Math.round((paidAmount / totalRevenue) * 100) : 0;
+  const pendingPercent = totalRevenue > 0 ? Math.round((pendingAmount / totalRevenue) * 100) : 0;
 
   return {
-    totalOrders: orders.length,
-    totalValue,
-    pending,
-    completed,
-    uniqueCustomers,
+    totalOrders,
+    totalRevenue,
+    paidAmount,
+    pendingAmount,
+    avgOrderValue,
+    paidPercent,
+    pendingPercent,
   };
 }
 
@@ -59,7 +50,7 @@ interface StatCardProps {
   icon: React.ComponentType<{ className?: string }>;
   iconBg: string;
   iconColor: string;
-  sparkColor: string;
+  borderColor: string;
 }
 
 function StatCard({
@@ -69,26 +60,27 @@ function StatCard({
   icon: Icon,
   iconBg,
   iconColor,
-  sparkColor,
+  borderColor,
 }: StatCardProps) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-            iconBg,
-          )}
-        >
-          <Icon className={cn("h-5 w-5", iconColor)} />
+    <div className={cn(
+      "flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_4px_20px_rgb(0,0,0,0.01)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:-translate-y-0.5",
+      borderColor
+    )}>
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-550">{label}</p>
+          <p className="text-[19px] font-black text-slate-800 tracking-tight leading-none pt-1">
+            {value}
+          </p>
         </div>
-        <div className="flex flex-col">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
-          <p className="mt-0.5 text-lg font-bold tracking-tight text-slate-900 leading-tight">{value}</p>
-          <p className="mt-0.5 text-[10px] font-semibold text-slate-400/80">{subtitle}</p>
+        <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl shadow-inner shrink-0", iconBg, iconColor)}>
+          <Icon className="h-4.5 w-4.5" />
         </div>
       </div>
-      <Sparkline color={sparkColor} />
+      <p className="mt-3 text-[10px] font-medium text-slate-550 uppercase tracking-wide">
+        {subtitle}
+      </p>
     </div>
   );
 }
@@ -101,51 +93,51 @@ export function OrdersStatsCards({ orders }: OrdersStatsCardsProps) {
   const stats = computeOrderStats(orders);
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <StatCard
         label="Total Orders"
         value={String(stats.totalOrders)}
         subtitle="All time orders"
-        icon={ShoppingBag}
-        iconBg="bg-violet-100/70"
-        iconColor="text-violet-600"
-        sparkColor="#7c3aed"
+        icon={Box}
+        iconBg="bg-violet-50"
+        iconColor="text-violet-500"
+        borderColor="hover:border-violet-100"
       />
       <StatCard
-        label="Total Order Value"
-        value={formatCurrencyDisplay(stats.totalValue)}
-        subtitle="All orders value"
-        icon={Wallet}
-        iconBg="bg-emerald-100/70"
-        iconColor="text-emerald-600"
-        sparkColor="#059669"
+        label="Total Revenue"
+        value={formatCurrencyDisplay(stats.totalRevenue)}
+        subtitle="All orders revenue"
+        icon={DollarSign}
+        iconBg="bg-emerald-50"
+        iconColor="text-emerald-500"
+        borderColor="hover:border-emerald-100"
       />
       <StatCard
-        label="Pending Orders"
-        value={String(stats.pending)}
-        subtitle="Awaiting processing"
+        label="Paid Amount"
+        value={formatCurrencyDisplay(stats.paidAmount)}
+        subtitle={`${stats.paidPercent}% of total`}
+        icon={CreditCard}
+        iconBg="bg-blue-50"
+        iconColor="text-blue-500"
+        borderColor="hover:border-blue-100"
+      />
+      <StatCard
+        label="Pending Amount"
+        value={formatCurrencyDisplay(stats.pendingAmount)}
+        subtitle={`${stats.pendingPercent}% of total`}
         icon={Clock}
-        iconBg="bg-blue-100/70"
-        iconColor="text-blue-600"
-        sparkColor="#2563eb"
+        iconBg="bg-amber-50"
+        iconColor="text-amber-500"
+        borderColor="hover:border-amber-100"
       />
       <StatCard
-        label="Completed Orders"
-        value={String(stats.completed)}
-        subtitle="Successfully delivered"
-        icon={CheckCircle2}
-        iconBg="bg-orange-100/70"
-        iconColor="text-orange-600"
-        sparkColor="#ea580c"
-      />
-      <StatCard
-        label="Total Customers"
-        value={String(stats.uniqueCustomers)}
-        subtitle="Active customers"
-        icon={Users}
-        iconBg="bg-red-100/70"
-        iconColor="text-red-600"
-        sparkColor="#dc2626"
+        label="Avg. Order Value"
+        value={formatCurrencyDisplay(stats.avgOrderValue)}
+        subtitle="Per order average"
+        icon={TrendingUp}
+        iconBg="bg-indigo-50"
+        iconColor="text-indigo-500"
+        borderColor="hover:border-indigo-100"
       />
     </div>
   );

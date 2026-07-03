@@ -37,7 +37,7 @@ export function ClientDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-7xl animate-pulse">
+      <div className="space-y-4 max-w-7xl mx-auto animate-pulse">
         <div className="space-y-1">
           <div className="h-6 w-48 rounded-xl bg-slate-200" />
           <div className="h-3 w-80 rounded-xl bg-slate-100" />
@@ -65,7 +65,7 @@ export function ClientDashboardPage() {
   const cancelledCount = stats?.cancelled ?? 0;
 
   return (
-    <div className="space-y-4 max-w-7xl text-[#1e293b] font-sans h-full flex flex-col justify-between">
+    <div className="space-y-6 max-w-7xl mx-auto text-[#1e293b] font-sans pb-6">
       
       {/* Header */}
       <div className="flex flex-row items-center justify-between">

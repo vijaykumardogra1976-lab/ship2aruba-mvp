@@ -1,10 +1,9 @@
 export const WIZARD_STEPS = [
   { id: 1, title: "Customer", description: "Select or create customer" },
   { id: 2, title: "Order Info", description: "Date, items, website & amount" },
-  { id: 3, title: "Payment Info", description: "Type & amount & total" },
-  { id: 4, title: "Payment Method", description: "cash, pin or transfer" },
-  { id: 5, title: "Options & Notes", description: "Client, urgent & notes" },
-  { id: 6, title: "Preview", description: "Review before submit" },
+  { id: 3, title: "Payment", description: "Type, method & amount" },
+  { id: 4, title: "Options & Notes", description: "Client, urgent & notes" },
+  { id: 5, title: "Preview", description: "Review before submit" },
 ] as const;
 
 export const WEBSITE_OPTIONS = [

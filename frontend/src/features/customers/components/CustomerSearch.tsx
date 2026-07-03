@@ -1,10 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Building,
-  ChevronDown,
   ChevronRight,
-  Globe,
-  Hash,
   Mail,
   MapPin,
   Plus,
@@ -416,57 +413,7 @@ export function CustomerSearch({ form, selected, onSelect }: CustomerSearchProps
               />
             </div>
           </div>
-
-          {/* State (Mock) */}
-          <div className="space-y-0.5">
-            <label className="text-[10px] font-bold text-slate-750" htmlFor="mock_state">
-              State (Optional)
-            </label>
-            <div className="relative">
-              <Building className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-555" />
-              <input
-                id="mock_state"
-                placeholder="Enter state"
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-hidden font-semibold"
-              />
-            </div>
-          </div>
-
-          {/* Postal Code (Mock) */}
-          <div className="space-y-0.5">
-            <label className="text-[10px] font-bold text-slate-750" htmlFor="mock_postal">
-              Postal Code (Optional)
-            </label>
-            <div className="relative">
-              <Hash className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
-              <input
-                id="mock_postal"
-                placeholder="Enter postal code"
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-hidden font-semibold"
-              />
-            </div>
-          </div>
-
-          {/* Country (Mock) */}
-          <div className="space-y-0.5">
-            <label className="text-[10px] font-bold text-slate-750" htmlFor="mock_country">
-              Country
-            </label>
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-505" />
-              <select
-                id="mock_country"
-                aria-label="Country select"
-                className="h-8.5 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-8.5 pr-10 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden font-bold"
-              >
-                <option>India</option>
-                <option>Aruba</option>
-                <option>United States</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            </div>
-          </div>
-        </div>
+        </div> {/* Closes the grid */}
 
         {/* Checkbox Save */}
         <div className="flex items-center gap-2 pt-1">

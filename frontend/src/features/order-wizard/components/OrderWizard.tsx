@@ -17,7 +17,6 @@ import { toApiDate } from "../utils/calculations";
 import { InvoicePreview } from "./InvoicePreview";
 import { NotesSection } from "./NotesSection";
 import { OrderPreview } from "./OrderPreview";
-import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import { PaymentTypeSelector } from "./PaymentTypeSelector";
 import { SuccessDialog } from "./SuccessDialog";
 import { WebsiteSelector } from "./WebsiteSelector";
@@ -100,7 +99,7 @@ export function OrderWizard() {
   };
 
   const handleSubmit = async () => {
-    for (let s = 1; s <= 5; s++) {
+    for (let s = 1; s <= 4; s++) {
       if (!validateStep(s)) return;
     }
     const parsed = orderSchema.safeParse(form.getValues());
@@ -125,6 +124,7 @@ export function OrderWizard() {
       is_urgent: v.is_urgent,
       internal_notes: v.internal_notes,
       client_notes: v.client_notes,
+      send_email: !selectedPdf,
     });
   };
 
@@ -182,6 +182,8 @@ export function OrderWizard() {
             email: newEmail || undefined,
           });
           form.setValue("customer", created, { shouldValidate: true });
+          // Auto-mark as new client since we just created them
+          form.setValue("is_new_client", true, { shouldDirty: true });
           // Clear inline fields
           form.setValue("new_customer_name", "");
           form.setValue("new_customer_phone", "");
@@ -220,7 +222,7 @@ export function OrderWizard() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-50 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-slate-50 overflow-y-auto">
       {/* Header section (above Card) */}
       <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-6 py-2 flex items-center justify-between">
         <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">
@@ -249,15 +251,14 @@ export function OrderWizard() {
         )}
       </div>
 
-      {/* Main card wrapper */}
-      <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-6 pb-4 flex-1 flex flex-col min-h-0">
-        <Card className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200/85 bg-white shadow-xs">
-          <CardContent className="min-h-0 flex-1 overflow-hidden p-4 lg:p-5">
-            <div className="flex h-full min-h-0 gap-4">
+      <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-6 pb-4">
+        <Card className="rounded-xl border border-slate-200/85 bg-white shadow-xs">
+          <CardContent className="p-4 lg:p-5">
+            <div className="flex gap-4">
               <WizardSidebar currentStep={step} onStepClick={goToStep} />
 
-              <div className="flex min-w-0 flex-1 flex-col justify-between">
-                <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-2">
+              <div className="flex-1 min-w-0 flex flex-col justify-between">
+                <div className="overflow-x-hidden pr-2">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={step}
@@ -281,9 +282,8 @@ export function OrderWizard() {
                         />
                       )}
                       {step === 3 && <PaymentTypeSelector form={form} />}
-                      {step === 4 && <PaymentMethodSelector form={form} />}
-                      {step === 5 && <NotesSection form={form} />}
-                      {step === 6 && <OrderPreview form={form} />}
+                      {step === 4 && <NotesSection form={form} />}
+                      {step === 5 && <OrderPreview form={form} />}
                     </motion.div>
                   </AnimatePresence>
                 </div>
@@ -299,7 +299,7 @@ export function OrderWizard() {
                     <ChevronLeft className="h-4 w-4" />
                     Previous
                   </Button>
-                  {step < 6 ? (
+                  {step < 5 ? (
                     <Button
                       type="button"
                       onClick={() => void handleNext()}

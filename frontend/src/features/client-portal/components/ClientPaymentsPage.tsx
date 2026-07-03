@@ -45,7 +45,7 @@ export function ClientPaymentsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-7xl animate-pulse">
+      <div className="space-y-4 max-w-7xl mx-auto animate-pulse">
         <div className="space-y-1">
           <div className="h-6 w-48 rounded-xl bg-slate-200" />
           <div className="h-3 w-80 rounded-xl bg-slate-100" />
@@ -72,7 +72,7 @@ export function ClientPaymentsPage() {
   };
 
   return (
-    <div className="space-y-5 max-w-7xl text-[#1e293b] font-sans">
+    <div className="space-y-5 max-w-7xl mx-auto text-[#1e293b] font-sans">
       
       {/* Title & Breadcrumbs */}
       <div className="flex flex-col gap-0.5">

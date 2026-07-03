@@ -1,5 +1,5 @@
 import { Box, Calendar, Check, ChevronDown, ShoppingCart, UploadCloud, Info } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { WEBSITE_OPTIONS } from "../constants";
@@ -35,6 +35,14 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
   const { register, setValue, watch, formState: { errors } } = form;
   const websiteType = watch("website_type");
   const [dragActive, setDragActive] = useState(false);
+
+  // Auto-fill order date with today on mount (if not already set)
+  useEffect(() => {
+    const currentDate = form.getValues("order_date");
+    if (!currentDate) {
+      setValue("order_date", getTodayDateString(), { shouldValidate: true, shouldDirty: true });
+    }
+  }, [form, setValue]);
 
   const selectWebsite = (type: WebsiteType, website: string) => {
     setValue("website_type", type, { shouldValidate: true, shouldDirty: true });
@@ -230,11 +238,11 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
       <div className="w-80 shrink-0 border-l border-slate-100 pl-5 flex flex-col justify-center">
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-800">Upload Items PDF (Optional)</span>
+            <span className="text-xs font-bold text-slate-800">Upload Document (Optional)</span>
             <Info className="h-3.5 w-3.5 text-violet-500 cursor-pointer" />
           </div>
           <p className="text-[10px] text-slate-500 leading-normal">
-            Upload PDF invoice or items list to get items details automatically.
+            Upload PDF, screenshot, or photo of the order to auto-extract item details via AI.
           </p>
           <div
             onDragEnter={handleDrag}
@@ -250,21 +258,21 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
               <UploadCloud className="h-4.5 w-4.5" />
             </div>
             <p className="text-[10px] font-bold text-slate-900 truncate max-w-full px-1">
-              {pdfFile ? pdfFile.name : "Drag & drop PDF here"}
+              {pdfFile ? pdfFile.name : "Drag & drop file here"}
             </p>
             <p className="text-[9px] text-slate-500 mt-0.5 font-bold">or</p>
             <label className="mt-2 inline-flex h-7 items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shadow-xs transition select-none">
-              Choose PDF File
+              Choose File
               <input
                 type="file"
-                accept=".pdf,application/pdf"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
                 onChange={handleFileChange}
                 className="hidden"
               />
             </label>
           </div>
           <p className="text-[9px] text-slate-500 text-center leading-none mt-1 font-bold">
-            Max file size: 10MB | PDF only
+            Max 20MB · PDF, PNG, JPG, JPEG, WEBP · AI-powered extraction
           </p>
           {pdfFile && (
             <div className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1.5 text-[11px] border border-slate-200">

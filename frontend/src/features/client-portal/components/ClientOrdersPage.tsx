@@ -203,7 +203,7 @@ export function ClientOrdersPage() {
   const endItemIdx = Math.min(page * itemsPerPage, count);
 
   return (
-    <div className="space-y-4 max-w-7xl text-[#1e293b] font-sans">
+    <div className="space-y-4 max-w-7xl mx-auto text-[#1e293b] font-sans">
       
       {/* Title & Breadcrumbs */}
       <div className="flex flex-col gap-0.5">

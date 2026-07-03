@@ -124,37 +124,203 @@ class OrderEditView(APIView):
 
 
 class OrderUploadPdfView(APIView):
+    """
+    Accept a PDF or image document upload for an order.
+
+    Supported file types: PDF, PNG, JPG, JPEG, WEBP (max 20 MB).
+
+    POST /orders/<pk>/upload-pdf/
+    Content-Type: multipart/form-data
+    Body:         file=<document>
+
+    Response 201::
+
+        {
+          "success": true,
+          "marketplace": "Amazon",
+          "confidence": 0.97,
+          "parse_method": "gemini",
+          "preview_images": ["media/document_parser/abc/product_1.png"],
+          "items": [
+            {
+              "label": "...",
+              "quantity": 1,
+              "unit_price": "32.00",
+              "line_total": "32.00",
+              "image_url": "..."
+            }
+          ],
+          "document": { ... }
+        }
+    """
+
     permission_classes = [IsStaffUser]
     parser_classes = [MultiPartParser, FormParser]
+
+    ALLOWED_EXTENSIONS = frozenset([".pdf", ".png", ".jpg", ".jpeg", ".webp"])
+    ALLOWED_MIMES = frozenset([
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "image/jpg",
+        "image/webp",
+    ])
+    MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
 
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         uploaded_file = request.FILES.get("file")
+
         if not uploaded_file:
             return Response(
                 {"detail": "No file provided."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if uploaded_file.content_type != "application/pdf" and not uploaded_file.name.lower().endswith(
-            ".pdf"
-        ):
+
+        # Validate file type
+        import os
+        ext = os.path.splitext(uploaded_file.name.lower())[1]
+        content_type = (uploaded_file.content_type or "").split(";")[0].strip().lower()
+
+        if ext not in self.ALLOWED_EXTENSIONS and content_type not in self.ALLOWED_MIMES:
             return Response(
-                {"detail": "Only PDF files are allowed."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if uploaded_file.size > 10 * 1024 * 1024:
-            return Response(
-                {"detail": "File size must not exceed 10 MB."},
+                {
+                    "detail": (
+                        f"Unsupported file type '{ext}'. "
+                        "Allowed: PDF, PNG, JPG, JPEG, WEBP."
+                    )
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if uploaded_file.size > self.MAX_FILE_SIZE:
+            return Response(
+                {"detail": "File size must not exceed 20 MB."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ── Step 1: Run AI parser first (before saving) for preview ──────────
+        is_background = request.query_params.get("background", "false").lower() == "true"
+
+        if is_background:
+            file_content = uploaded_file.read()
+            file_name = uploaded_file.name
+            content_type = uploaded_file.content_type
+
+            def process_in_background(order_id, user_id, f_content, f_name, c_type):
+                import logging
+                logger = logging.getLogger("apps.orders.views")
+                try:
+                    from django.contrib.auth import get_user_model
+                    from django.core.files.uploadedfile import SimpleUploadedFile
+                    from apps.orders.models import Order
+                    from apps.notifications.services.notification_service import NotificationService
+
+                    User = get_user_model()
+                    user = User.objects.get(pk=user_id)
+                    order_obj = Order.objects.get(pk=order_id)
+                    
+                    new_file = SimpleUploadedFile(name=f_name, content=f_content, content_type=c_type)
+                    
+                    OrderViewerService.upload_pdf(
+                        order=order_obj,
+                        user=user,
+                        uploaded_file=new_file,
+                        parse_result=None,
+                    )
+                    
+                    NotificationService.send_order_created(order_id)
+                except Exception as e:
+                    logger.exception(f"Background PDF processing failed for order {order_id}: {e}")
+
+            import threading
+            thread = threading.Thread(
+                target=process_in_background,
+                args=(order.id, request.user.id, file_content, file_name, content_type)
+            )
+            thread.start()
+
+            return Response(
+                {
+                    "success": True,
+                    "processing": True,
+                    "message": "File is being processed in the background."
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
+
+        from apps.orders.services.ai_document_parser import AIDocumentParserService
+        try:
+            uploaded_file.seek(0)
+            parse_result = AIDocumentParserService.parse(
+                file_stream=uploaded_file,
+                filename=uploaded_file.name,
+            )
+            uploaded_file.seek(0)
+        except Exception:
+            parse_result = None
+
+        # ── Step 2: Persist document + items via service ──────────────────────
         document = OrderViewerService.upload_pdf(
-            order=order, user=request.user, uploaded_file=uploaded_file
+            order=order,
+            user=request.user,
+            uploaded_file=uploaded_file,
+            parse_result=parse_result,
         )
+
+        # ── Step 3: Build rich response ────────────────────────────────────────
+        doc_data = OrderDocumentSerializer(document, context={"request": request}).data
+
+        if parse_result:
+            items_preview = [
+                {
+                    "label": item.label,
+                    "quantity": item.quantity,
+                    "unit_price": str(item.unit_price),
+                    "line_total": str(item.line_total),
+                    "seller": item.seller,
+                    "color": item.color,
+                    "size": item.size,
+                    "image_url": item.image_url,
+                }
+                for item in parse_result.items
+            ]
+            
+            # Now that actual items are populated, send the invoice email
+            from apps.notifications.services.notification_service import NotificationService
+            NotificationService.send_order_created(order.id)
+
+            return Response(
+                {
+                    "success": parse_result.success,
+                    "marketplace": parse_result.marketplace,
+                    "confidence": parse_result.confidence,
+                    "parse_method": parse_result.parse_method,
+                    "currency": parse_result.currency,
+                    "preview_images": parse_result.preview_images,
+                    "items": items_preview,
+                    "document": doc_data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        # Minimal fallback response if parser itself errored
+        from apps.notifications.services.notification_service import NotificationService
+        NotificationService.send_order_created(order.id)
+
         return Response(
-            OrderDocumentSerializer(document, context={"request": request}).data,
+            {
+                "success": False,
+                "marketplace": "",
+                "confidence": 0.0,
+                "parse_method": "error",
+                "preview_images": [],
+                "items": [],
+                "document": doc_data,
+            },
             status=status.HTTP_201_CREATED,
         )
+
 
 
 def _recalculate_order_totals(order):
@@ -193,7 +359,7 @@ class OrderItemListView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         order = get_object_or_404(Order, pk=self.kwargs["pk"])
-        return order.items.all()
+        return order.items.all().order_by("id")
 
     def perform_create(self, serializer):
         from decimal import Decimal

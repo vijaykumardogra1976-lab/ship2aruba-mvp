@@ -36,10 +36,15 @@ export function NotesSection({ form }: NotesSectionProps) {
   const clientNotes = watch("client_notes") || "";
 
   const itemsTotal = watch("items_total") || 0;
+  const paidAmount = watch("paid_amount") || 0;
+  const paymentAmount = watch("payment_amount") || 0;
+  const paymentType = watch("payment_type");
   const website = watch("website") || "";
   const websiteType = watch("website_type") || "";
   const paymentMethod = watch("payment_method") || "";
   const orderDate = watch("order_date");
+
+  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paymentAmount));
 
   const handleNewClientClick = () => {
     setValue("is_new_client", !isNewClient, { shouldDirty: true });
@@ -102,9 +107,16 @@ export function NotesSection({ form }: NotesSectionProps) {
                 <UserPlus className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-extrabold text-slate-900 leading-tight">New Client</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-extrabold text-slate-900 leading-tight">New Client</p>
+                  {isNewClient && (
+                    <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700 leading-none">
+                      Auto-detected
+                    </span>
+                  )}
+                </div>
                 <p className="text-[10px] text-slate-550 mt-0.5 leading-none font-semibold">
-                  Create this customer as a new client
+                  {isNewClient ? "Toggle off if not a new client" : "Mark as a new client"}
                 </p>
               </div>
             </div>
@@ -190,20 +202,25 @@ export function NotesSection({ form }: NotesSectionProps) {
           <div className="space-y-2.5 text-xs text-slate-700 font-semibold">
             <div className="flex items-center justify-between">
               <span>Items Total</span>
-              <span className="text-slate-900 font-bold">{formatCurrency(itemsTotal)}</span>
+              <span className="text-slate-900 font-bold">AWG {formatCurrency(itemsTotal)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Shipping</span>
-              <span className="text-slate-900 font-bold">0.00 AWG</span>
+              <span>Paid Amount</span>
+              <span className="text-slate-900 font-bold">AWG {formatCurrency(paidAmount)}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5">
+              <span>Payment Type</span>
+              <span className="text-slate-900 font-extrabold uppercase text-[10px]">
+                {paymentType === "one" ? "One Payment" : paymentType === "two" ? "Two Payments" : "-"}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Discount</span>
-              <span className="text-slate-900 font-bold">0.00 AWG</span>
+              <span>Payment Amount</span>
+              <span className="text-slate-900 font-bold">AWG {formatCurrency(paymentAmount)}</span>
             </div>
-            <div className="border-t border-slate-200 my-2" />
-            <div className="flex items-center justify-between text-violet-650 font-bold">
-              <span>Total Amount</span>
-              <span className="text-sm font-extrabold">{formatCurrency(itemsTotal)}</span>
+            <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5 text-violet-750">
+              <span>Balance Due</span>
+              <span className="text-violet-700 font-extrabold text-sm">AWG {formatCurrency(balanceDue)}</span>
             </div>
           </div>
         </div>

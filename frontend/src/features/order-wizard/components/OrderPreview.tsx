@@ -1,19 +1,15 @@
 import type { UseFormReturn } from "react-hook-form";
 import type { OrderFormData } from "../types";
 import {
-  calculateRemainingBalance,
   paymentMethodLabel,
   paymentTypeLabel,
 } from "../utils/calculations";
 import {
-  Banknote,
   Calendar,
-  CreditCard,
   DollarSign,
   FileCheck2,
   FileText,
   Globe,
-  Landmark,
   Layers,
   ShoppingBag,
   User,
@@ -43,16 +39,10 @@ function PreviewRow({
   );
 }
 
-const methodIcons = {
-  cash: Banknote,
-  pin: CreditCard,
-  transfer: Landmark,
-  "": Banknote
-};
 
 export function OrderPreview({ form }: OrderPreviewProps) {
   const v = form.getValues();
-  const remaining = calculateRemainingBalance(v.items_total, v.paid_amount);
+  const remaining = Math.max(0, (v.items_total ? Number(v.items_total) : 0) - (v.payment_amount ? Number(v.payment_amount) : 0));
 
   const formatCurrency = (val: string | number | undefined | null) => {
     if (val === undefined || val === null || val === "") return "0.00 AWG";
@@ -69,7 +59,6 @@ export function OrderPreview({ form }: OrderPreviewProps) {
     return dateStr;
   };
 
-  const MethodIcon = methodIcons[v.payment_method as keyof typeof methodIcons] || Banknote;
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 items-stretch">
@@ -101,7 +90,7 @@ export function OrderPreview({ form }: OrderPreviewProps) {
           <PreviewRow
             icon={DollarSign}
             label="Amount in USD"
-            value={v.amount_usd !== "" ? `$${Number(v.amount_usd).toFixed(2)}` : "-"}
+            value={v.amount_usd !== "" ? `${Number(v.amount_usd).toFixed(2)} AWG` : "-"}
           />
         </div>
 
@@ -138,7 +127,7 @@ export function OrderPreview({ form }: OrderPreviewProps) {
       </div>
 
       {/* Right Panel: Payment Summary */}
-      <div className="w-80 shrink-0 border-l border-slate-100 pl-4 flex flex-col justify-center space-y-3">
+      <div className="w-80 shrink-0 border-l border-slate-100 pl-4 flex flex-col justify-start space-y-3 lg:mt-[44px]">
         <div className="rounded-xl border border-slate-200 bg-violet-50/10 p-3.5 space-y-2.5">
           <div className="flex items-center gap-2">
             <FileCheck2 className="h-4.5 w-4.5 text-violet-650" />
@@ -162,49 +151,24 @@ export function OrderPreview({ form }: OrderPreviewProps) {
               <span>Items Total</span>
               <span className="text-slate-950 font-black">{formatCurrency(v.items_total)}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Paid Amount</span>
-              <span className="text-slate-950 font-black">{formatCurrency(v.paid_amount)}</span>
-            </div>
+            {Number(v.paid_amount) > 0 && (
+              <div className="flex items-center justify-between">
+                <span>Paid Amount</span>
+                <span className="text-slate-950 font-black">{formatCurrency(v.paid_amount)}</span>
+              </div>
+            )}
+            {remaining > 0 && (
+              <div className="flex items-center justify-between">
+                <span>Remaining Balance</span>
+                <span className="text-slate-950 font-black">{formatCurrency(remaining)}</span>
+              </div>
+            )}
             <div className="border-t border-slate-200/80 my-1.5" />
             <div className="flex items-center justify-between text-violet-650 font-bold">
-              <span>Remaining Balance</span>
-              <span className="text-sm font-extrabold">{formatCurrency(remaining)}</span>
+              <span>Payment Amount</span>
+              <span className="text-sm font-extrabold">{formatCurrency(v.payment_amount)}</span>
             </div>
           </div>
-        </div>
-
-        {/* Decorative Selection Pills */}
-        <div className="space-y-2">
-          {/* Payment Type Pill */}
-          {v.payment_type && (
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/20 px-3 py-2 shadow-xs">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600">
-                <FileCheck2 className="h-4.5 w-4.5" />
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none">Payment Type</p>
-                <p className="text-xs font-extrabold text-slate-900 mt-1 leading-none">
-                  {paymentTypeLabel(v.payment_type)}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Payment Method Pill */}
-          {v.payment_method && (
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/20 px-3 py-2 shadow-xs">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600">
-                <MethodIcon className="h-4.5 w-4.5" />
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none">Payment Method</p>
-                <p className="text-xs font-extrabold text-slate-900 mt-1 leading-none">
-                  {paymentMethodLabel(v.payment_method)}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

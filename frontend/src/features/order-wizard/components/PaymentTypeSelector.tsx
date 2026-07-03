@@ -1,7 +1,7 @@
-import { Banknote, CreditCard, DollarSign, FileCheck2, ShoppingBag } from "lucide-react";
+import { Banknote, CreditCard, FileCheck2, ShoppingBag, Landmark, Check, CheckCircle2 } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
-import { PAYMENT_TYPE_OPTIONS } from "../constants";
-import type { OrderFormData, PaymentType } from "../types";
+import { PAYMENT_TYPE_OPTIONS, PAYMENT_METHOD_OPTIONS } from "../constants";
+import type { OrderFormData, PaymentType, PaymentMethod } from "../types";
 import { cn } from "@/lib/utils";
 
 interface PaymentTypeSelectorProps {
@@ -14,6 +14,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
   const paymentAmount = watch("payment_amount");
   const itemsTotal = watch("items_total") || 0;
   const paidAmount = watch("paid_amount") || 0;
+  const paymentMethod = watch("payment_method");
 
   const paymentAmountField = register("payment_amount");
 
@@ -45,22 +46,39 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
     syncItemsTotal(type, paymentAmount);
   };
 
-  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paidAmount));
+  const selectMethod = (method: PaymentMethod) => {
+    setValue("payment_method", method, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paymentAmount));
 
   const formatCurrency = (val: string | number) => {
     const num = Number(val);
     return Number.isNaN(num) ? "0.00" : num.toFixed(2);
   };
 
+  const getAlertText = () => {
+    switch (paymentMethod) {
+      case "cash":
+        return "This payment will be recorded as a cash transaction.";
+      case "pin":
+        return "This payment will be recorded as a PIN transaction.";
+      case "transfer":
+        return "This payment will be recorded as a bank transfer transaction.";
+      default:
+        return "Please select a payment method.";
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-5 items-stretch">
       {/* Left Panel: Payment form fields */}
-      <div className="flex-1 space-y-4">
+      <div className="flex-1 space-y-5">
         {/* Title */}
         <div>
-          <h2 className="text-base font-bold text-slate-900 leading-none">Payment Info</h2>
+          <h2 className="text-base font-bold text-slate-900 leading-none">Payment</h2>
           <p className="text-[11px] text-slate-500 font-bold mt-0.5">
-            Select payment type and enter payment details.
+            Select payment details and method.
           </p>
         </div>
 
@@ -116,6 +134,9 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
               );
             })}
           </div>
+          {errors.payment_type && (
+            <p className="text-[10px] text-red-500 font-semibold">{errors.payment_type.message}</p>
+          )}
         </div>
 
         {/* Text Input Grid */}
@@ -126,7 +147,6 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
               Payment Amount (AWG) *
             </label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <input
                 id="payment_amount"
                 type="number"
@@ -138,7 +158,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                   paymentAmountField.onChange(event);
                   syncItemsTotal(paymentType, event.target.value);
                 }}
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
+                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>
             <p className="text-[10px] text-slate-500 font-bold leading-none pl-0.5">
@@ -180,7 +200,6 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
               Paid Amount (AWG) *
             </label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <input
                 id="paid_amount"
                 type="number"
@@ -188,7 +207,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                 step="0.01"
                 placeholder="Enter paid amount"
                 {...register("paid_amount")}
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
+                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>
             <p className="text-[10px] text-slate-500 font-bold leading-none pl-0.5">
@@ -199,6 +218,62 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             )}
           </div>
         </div>
+
+        {/* Payment Method Cards */}
+        <div className="space-y-2 pt-4 border-t border-slate-100">
+          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Select the order payment method *
+          </p>
+          <div className="grid gap-3 grid-cols-3">
+            {PAYMENT_METHOD_OPTIONS.map((opt) => {
+              const methodIcons = { cash: Banknote, pin: CreditCard, transfer: Landmark };
+              const methodColors = { cash: "text-violet-650", pin: "text-blue-500", transfer: "text-blue-600" };
+              const Icon = methodIcons[opt.type];
+              const isSelected = paymentMethod === opt.type;
+              const iconColor = methodColors[opt.type];
+
+              return (
+                <button
+                  key={opt.type}
+                  type="button"
+                  onClick={() => selectMethod(opt.type)}
+                  className={cn(
+                    "flex h-24 flex-col items-center justify-center gap-1.5 rounded-xl border transition relative cursor-pointer w-full",
+                    isSelected
+                      ? "border-violet-500 bg-violet-50/20 font-bold ring-1 ring-violet-200"
+                      : "border-slate-200 bg-white text-slate-500 hover:border-slate-350"
+                  )}
+                >
+                  {isSelected && (
+                    <span className="absolute top-2 right-2 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-violet-600 text-white shadow-xs">
+                      <Check className="h-3 w-3 stroke-[3]" />
+                    </span>
+                  )}
+                  <Icon className={cn("h-6 w-6", isSelected ? "text-violet-650" : iconColor)} />
+                  <div className="text-center">
+                    <p className="text-xs font-extrabold text-slate-900 leading-tight">{opt.label}</p>
+                    <p className="text-[10px] text-slate-555 mt-0.5 leading-none font-semibold">
+                      {opt.type === "cash" && "Pay with cash"}
+                      {opt.type === "pin" && "Pay with PIN"}
+                      {opt.type === "transfer" && "Bank transfer"}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {errors.payment_method && (
+            <p className="text-[10px] text-red-500 font-semibold">{errors.payment_method.message}</p>
+          )}
+        </div>
+
+        {/* Payment Alert Banner */}
+        {paymentMethod && (
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/20 px-4 py-2.5 flex items-center gap-2 text-xs font-bold text-emerald-800 shadow-xs">
+            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
+            <span>{getAlertText()}</span>
+          </div>
+        )}
       </div>
 
       {/* Right Panel: Payment Summary Card */}
@@ -218,10 +293,21 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
               <span>Paid Amount</span>
               <span className="text-slate-900 font-bold">AWG {formatCurrency(paidAmount)}</span>
             </div>
-            <div className="border-t border-slate-250 my-2" />
-            <div className="flex items-center justify-between text-violet-650 font-bold">
+            <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5">
+              <span>Payment Type</span>
+              <span className="text-slate-900 font-extrabold uppercase text-[10px]">
+                {paymentType === "one" ? "One Payment" : paymentType === "two" ? "Two Payments" : "-"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Payment Method</span>
+              <span className="text-slate-900 font-extrabold uppercase text-[10px]">
+                {paymentMethod ? paymentMethod : "-"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5 text-violet-750">
               <span>Balance Due</span>
-              <span className="text-sm font-extrabold">AWG {formatCurrency(balanceDue)}</span>
+              <span className="text-violet-700 font-extrabold text-sm">AWG {formatCurrency(balanceDue)}</span>
             </div>
           </div>
         </div>
