@@ -72,9 +72,13 @@ class ClientSignupView(APIView):
             else:
                 # User exists but no password (e.g. staff created them). Just set the password.
                 existing_user.set_password(password)
+                existing_user.role = UserRole.CUSTOMER
                 existing_user.save()
                 tokens = _issue_tokens(existing_user)
-                return Response(tokens, status=status.HTTP_200_OK)
+                return Response({
+                    **tokens,
+                    "user": UserSerializer(existing_user).data
+                }, status=status.HTTP_200_OK)
 
         # Create new User
         first_name = name.split()[0] if name else ""
@@ -113,7 +117,10 @@ class ClientSignupView(APIView):
             )
 
         tokens = _issue_tokens(user)
-        return Response(tokens, status=status.HTTP_201_CREATED)
+        return Response({
+            **tokens,
+            "user": UserSerializer(user).data
+        }, status=status.HTTP_201_CREATED)
 
 
 class ClientLoginView(APIView):
