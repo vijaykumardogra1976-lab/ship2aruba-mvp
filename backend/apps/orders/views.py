@@ -286,9 +286,14 @@ class OrderUploadPdfView(APIView):
                 for item in parse_result.items
             ]
             
-            # Now that actual items are populated, send the invoice email
+            # Now that actual items are populated, send the invoice email in a background thread
+            import threading
             from apps.notifications.services.notification_service import NotificationService
-            NotificationService.send_order_created(order.id)
+            threading.Thread(
+                target=NotificationService.send_order_created,
+                args=(order.id,),
+                daemon=True
+            ).start()
 
             return Response(
                 {
@@ -305,8 +310,13 @@ class OrderUploadPdfView(APIView):
             )
 
         # Minimal fallback response if parser itself errored
+        import threading
         from apps.notifications.services.notification_service import NotificationService
-        NotificationService.send_order_created(order.id)
+        threading.Thread(
+            target=NotificationService.send_order_created,
+            args=(order.id,),
+            daemon=True
+        ).start()
 
         return Response(
             {
