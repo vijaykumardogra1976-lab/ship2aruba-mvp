@@ -19,7 +19,7 @@ export async function getOrderInvoice(orderId: number) {
 export async function uploadOrderPdf(orderId: number, file: File) {
   const formData = new FormData();
   formData.append("file", file);
-  const { data } = await api.post(`/orders/${orderId}/upload-pdf/?background=true`, formData, {
+  const { data } = await api.post(`/orders/${orderId}/upload-pdf/`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
