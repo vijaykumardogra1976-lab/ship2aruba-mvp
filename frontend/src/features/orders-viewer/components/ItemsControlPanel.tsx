@@ -31,6 +31,7 @@ export function ItemsControlPanel() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [uploading, setUploading] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   // States for Create/Edit Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -353,6 +354,8 @@ export function ItemsControlPanel() {
                 </tr>
               ) : (
                 filteredItems.map((item) => {
+                  const hasError = imageErrors[item.id];
+                  const imgUrl = !hasError ? (item.product_image || item.image_url) : null;
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                       {/* ID */}
@@ -361,11 +364,18 @@ export function ItemsControlPanel() {
                       {/* Merged Product Details (Image, Qty, Price, Order details) */}
                       <td className="py-3 px-4 max-w-sm">
                         <div className="flex items-start gap-3">
-                          <img
-                            src={item.product_image || item.image_url || "https://images.unsplash.com/photo-1523206489230-c012c64b2b48?w=200"}
-                            alt=""
-                            className="h-11 w-11 rounded-lg object-cover bg-slate-50 border border-slate-100 shrink-0 shadow-xs"
-                          />
+                          {imgUrl ? (
+                            <img
+                              src={imgUrl.startsWith("http") ? imgUrl : `${import.meta.env.VITE_API_BASE_URL || ""}${imgUrl}`}
+                              alt=""
+                              className="h-11 w-11 rounded-lg object-cover bg-slate-50 border border-slate-100 shrink-0 shadow-xs"
+                              onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
+                            />
+                          ) : (
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
+                              <Package className="h-5 w-5 text-slate-400" />
+                            </div>
+                          )}
                           <div className="min-w-0">
                             <p className="font-bold text-slate-800 break-words leading-snug text-xs" title={item.label}>
                               {item.label}
