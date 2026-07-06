@@ -285,10 +285,13 @@ export function CustomerSearch({ form, selected, onSelect }: CustomerSearchProps
       </div>
 
       {/* Or Create New Customer Inline Form */}
-      <div id="create-customer-section" className="space-y-2.5 pt-2.5 border-t border-slate-100">
-        <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          Or Create New Customer
-        </h3>
+      <div id="create-customer-section" className="space-y-3 pt-3.5 border-t border-slate-200">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md">
+            Or Create New Customer
+          </span>
+          <div className="h-px bg-slate-200/80 flex-1" />
+        </div>
 
         <div className="grid grid-cols-1 gap-x-4 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {/* Full Name */}
