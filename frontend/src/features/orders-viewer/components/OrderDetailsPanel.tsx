@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { OrderListItem } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { getOrderItems } from "../api/ordersViewerApi";
 
 interface OrderDetailsPanelProps {
@@ -57,6 +58,7 @@ export function OrderDetailsPanel({
   onPrintReceipt,
 }: OrderDetailsPanelProps) {
   const navigate = useNavigate();
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   if (!order) return null;
 
@@ -129,7 +131,8 @@ export function OrderDetailsPanel({
           ) : (
             <div className="space-y-3">
               {items.map((item) => {
-                const imgUrl = getImageUrl(item);
+                const hasError = imageErrors[item.id];
+                const imgUrl = !hasError ? getImageUrl(item) : null;
                 return (
                   <div key={item.id} className="flex items-center justify-between text-xs gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -138,8 +141,8 @@ export function OrderDetailsPanel({
                           src={imgUrl}
                           alt="Product"
                           className="h-8.5 w-8.5 rounded-lg object-cover border border-slate-100 bg-slate-50 shrink-0 shadow-inner"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none";
+                          onError={() => {
+                            setImageErrors((prev) => ({ ...prev, [item.id]: true }));
                           }}
                         />
                       ) : (
