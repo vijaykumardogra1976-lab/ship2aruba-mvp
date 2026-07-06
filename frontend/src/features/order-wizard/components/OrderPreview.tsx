@@ -42,7 +42,7 @@ function PreviewRow({
 
 export function OrderPreview({ form }: OrderPreviewProps) {
   const v = form.getValues();
-  const remaining = Math.max(0, (v.items_total ? Number(v.items_total) : 0) - (v.payment_amount ? Number(v.payment_amount) : 0));
+  const remaining = Math.max(0, (v.items_total ? Number(v.items_total) : 0) - (v.payment_amount ? Number(v.payment_amount) : 0) - (v.paid_amount ? Number(v.paid_amount) : 0));
 
   const formatCurrency = (val: string | number | undefined | null) => {
     if (val === undefined || val === null || val === "") return "0.00 AWG";

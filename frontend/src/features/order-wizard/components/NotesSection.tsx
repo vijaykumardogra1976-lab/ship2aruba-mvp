@@ -44,7 +44,7 @@ export function NotesSection({ form }: NotesSectionProps) {
   const paymentMethod = watch("payment_method") || "";
   const orderDate = watch("order_date");
 
-  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paymentAmount));
+  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paymentAmount) - Number(paidAmount));
 
   const handleNewClientClick = () => {
     setValue("is_new_client", !isNewClient, { shouldDirty: true });
