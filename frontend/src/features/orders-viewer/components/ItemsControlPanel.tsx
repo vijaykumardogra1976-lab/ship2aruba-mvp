@@ -7,6 +7,7 @@ import {
   Trash2,
   Edit,
   Search,
+  Upload,
   Package,
   RefreshCw,
   Loader2,
@@ -17,6 +18,7 @@ import {
   createOrderItem,
   updateOrderItem,
   deleteOrderItem,
+  uploadOrderPdf,
 } from "../api/ordersViewerApi";
 import { api } from "@/lib/axios";
 import type { OrderItemRow } from "../types";
@@ -28,10 +30,12 @@ export function ItemsControlPanel() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [uploading, setUploading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   // States for Create/Edit Modal
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<"pdf" | "manual">("pdf");
   const [editingItem, setEditingItem] = useState<OrderItemRow | null>(null);
   const [formLabel, setFormLabel] = useState("");
   const [formQuantity, setFormQuantity] = useState(1);
@@ -503,8 +507,94 @@ export function ItemsControlPanel() {
               {editingItem ? "Edit Order Item" : "Add New Item"}
             </h2>
 
-            {/* Manual Input Form Content */}
-            <form onSubmit={handleSaveSubmit} className="space-y-4">
+            {/* Tab Toggles (Only show when creating a new item) */}
+            {!editingItem && (
+              <div className="flex border-b border-slate-100 mb-5">
+                <button
+                  type="button"
+                  onClick={() => setModalTab("pdf")}
+                  className={cn(
+                    "flex-1 pb-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer",
+                    modalTab === "pdf"
+                      ? "border-violet-600 text-violet-750 font-black"
+                      : "border-transparent text-slate-400 hover:text-slate-600"
+                  )}
+                >
+                  Upload PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalTab("manual")}
+                  className={cn(
+                    "flex-1 pb-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer",
+                    modalTab === "manual"
+                      ? "border-violet-600 text-violet-750 font-black"
+                      : "border-transparent text-slate-400 hover:text-slate-600"
+                  )}
+                >
+                  Manual Entry
+                </button>
+              </div>
+            )}
+
+            {/* PDF Uploader Tab Content */}
+            {!editingItem && modalTab === "pdf" ? (
+              <div className="space-y-4">
+                <p className="text-xs text-slate-550 leading-relaxed text-center">
+                  Upload your Item PDF. Our AI engine will automatically extract the product images, description, pricing, and quantity details instantly.
+                </p>
+
+                {uploading ? (
+                  <div className="flex flex-col items-center justify-center border-2 border-slate-200 rounded-2xl p-8 bg-slate-50/50 min-h-[160px]">
+                    <Loader2 className="h-10 w-10 animate-spin text-violet-600 mb-3" />
+                    <p className="text-xs font-bold text-slate-800">Parsing and extracting items...</p>
+                    <p className="text-[10px] text-slate-500 mt-1">Our AI is reading the PDF and generating details</p>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-violet-400 rounded-2xl p-8 bg-slate-50/50 hover:bg-violet-50/20 transition-all cursor-pointer group">
+                    <Upload className="h-8 w-8 text-slate-400 group-hover:text-violet-600 transition-colors mb-3" />
+                    <span className="text-xs font-bold text-slate-700 group-hover:text-violet-700 text-center">
+                      Upload your Item PDF
+                    </span>
+                    <span className="text-[10px] text-slate-400 mt-1 font-semibold">Supports PDF files</span>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setUploading(true);
+                        try {
+                          await uploadOrderPdf(id, file);
+                          queryClient.invalidateQueries({ queryKey: queryKeys.orders.items(id) });
+                          queryClient.invalidateQueries({ queryKey: ["orders"] });
+                          setModalOpen(false);
+                          refetch();
+                        } catch (err) {
+                          console.error(err);
+                          alert("Failed to parse invoice. Please make sure it's a valid PDF.");
+                        } finally {
+                          setUploading(false);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Manual Input Form Content */
+              <form onSubmit={handleSaveSubmit} className="space-y-4">
                 {/* Description */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold text-slate-500 uppercase">Item Description *</label>
@@ -646,6 +736,7 @@ export function ItemsControlPanel() {
                   </button>
                 </div>
               </form>
+            )}
           </div>
         </div>
       )}
