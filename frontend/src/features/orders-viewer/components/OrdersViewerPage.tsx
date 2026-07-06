@@ -98,14 +98,14 @@ export function OrdersViewerPage() {
 
       if (!selectedOrder || !isStillInList || forceSelectLatest) {
         setSelectedOrder(tabFilteredOrders[0]);
-        if (forceSelectLatest) {
+        if (forceSelectLatest && !isFetching) {
           navigate(location.pathname, { replace: true, state: {} });
         }
       }
     } else if (!isLoading && tabFilteredOrders.length === 0) {
       setSelectedOrder(null);
     }
-  }, [tabFilteredOrders, isLoading, selectedOrder, location.state, navigate, location.pathname]);
+  }, [tabFilteredOrders, isLoading, isFetching, selectedOrder, location.state, navigate, location.pathname]);
 
   // Tab counts based on all orders loaded matching search/date
   const tabCounts = useMemo(() => {
