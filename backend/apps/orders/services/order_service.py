@@ -1,4 +1,5 @@
 import logging
+import threading
 from decimal import Decimal
 
 from django.conf import settings
@@ -108,8 +109,14 @@ class OrderService:
 
         send_email = validated_data.get("send_email", True)
         if send_email:
+            def _send_notification():
+                try:
+                    NotificationService.send_order_created(order_id)
+                except Exception:
+                    logger.exception("Background notification failed for order %s.", order_id)
+
             transaction.on_commit(
-                lambda: NotificationService.send_order_created(order_id)
+                lambda: threading.Thread(target=_send_notification, daemon=True).start()
             )
 
         return order
