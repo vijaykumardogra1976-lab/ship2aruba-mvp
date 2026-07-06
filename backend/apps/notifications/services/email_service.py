@@ -91,7 +91,7 @@ class EmailService:
             else:
                 logger.warning("PDF could not be generated; sending email without attachment.")
 
-            email.send(fail_silently=False)
+            email.send(fail_silently=True)
             logger.info("Invoice email sent to %s for order %s.", customer.email, order.order_number)
             return True
 
@@ -148,7 +148,7 @@ class EmailService:
                 to=[customer.email],
             )
             email.attach_alternative(html_content, "text/html")
-            email.send(fail_silently=False)
+            email.send(fail_silently=True)
             logger.info("Item status email sent to %s for item %s.", customer.email, item.id)
             return True
         except Exception:
