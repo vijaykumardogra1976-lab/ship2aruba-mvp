@@ -142,7 +142,7 @@ export function SuccessDialog({
               type="button"
               onClick={() => {
                 onOpenChange(false);
-                navigate("/orders");
+                navigate("/orders", { state: { selectLatest: true } });
               }}
               className="flex-1 inline-flex h-8 items-center justify-center gap-1 rounded-lg bg-blue-600 text-[10px] font-bold text-white shadow-sm hover:bg-blue-700 transition cursor-pointer"
             >

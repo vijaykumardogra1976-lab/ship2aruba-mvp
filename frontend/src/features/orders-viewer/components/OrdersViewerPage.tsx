@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Download, FileText, Printer } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { queryKeys } from "@/config/queryKeys";
 import { listAllOrders } from "../api/ordersViewerApi";
 import { getOrderInvoice } from "@/features/order-wizard/api/orderApi";
@@ -32,6 +32,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function OrdersViewerPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [filters, setFilters] = useState<OrdersFilterState>(defaultOrdersFilters);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -92,13 +94,18 @@ export function OrdersViewerPage() {
   useEffect(() => {
     if (!isLoading && tabFilteredOrders.length > 0) {
       const isStillInList = tabFilteredOrders.some((o) => o.id === selectedOrder?.id);
-      if (!selectedOrder || !isStillInList) {
+      const forceSelectLatest = location.state?.selectLatest;
+
+      if (!selectedOrder || !isStillInList || forceSelectLatest) {
         setSelectedOrder(tabFilteredOrders[0]);
+        if (forceSelectLatest) {
+          navigate(location.pathname, { replace: true, state: {} });
+        }
       }
     } else if (!isLoading && tabFilteredOrders.length === 0) {
       setSelectedOrder(null);
     }
-  }, [tabFilteredOrders, isLoading, selectedOrder]);
+  }, [tabFilteredOrders, isLoading, selectedOrder, location.state, navigate, location.pathname]);
 
   // Tab counts based on all orders loaded matching search/date
   const tabCounts = useMemo(() => {
