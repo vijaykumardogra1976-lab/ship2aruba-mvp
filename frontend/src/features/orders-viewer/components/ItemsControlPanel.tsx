@@ -7,7 +7,6 @@ import {
   Trash2,
   Edit,
   Search,
-  Upload,
   Package,
   RefreshCw,
   Loader2,
@@ -18,7 +17,6 @@ import {
   createOrderItem,
   updateOrderItem,
   deleteOrderItem,
-  uploadOrderPdf,
 } from "../api/ordersViewerApi";
 import { api } from "@/lib/axios";
 import type { OrderItemRow } from "../types";
@@ -30,12 +28,10 @@ export function ItemsControlPanel() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [uploading, setUploading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   // States for Create/Edit Modal
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<"pdf" | "manual">("pdf");
   const [editingItem, setEditingItem] = useState<OrderItemRow | null>(null);
   const [formLabel, setFormLabel] = useState("");
   const [formQuantity, setFormQuantity] = useState(1);
@@ -181,25 +177,7 @@ export function ItemsControlPanel() {
     });
   };
 
-  // PDF Import triggering
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    setUploading(true);
-    try {
-      await uploadOrderPdf(id, file);
-      // Invalidate queries to get newly parsed items!
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.items(id) });
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      refetch();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to parse invoice. Please make sure it's a valid PDF.");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   // Quick Inline change savers
   const handleInlineChange = (itemId: number, payload: any) => {
