@@ -28,6 +28,15 @@ class LoginView(APIView):
                 {"detail": "Account is disabled."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+        # Restrict login to staff/admin roles only
+        from apps.authentication.models import UserRole
+        if user.role not in [UserRole.ADMIN, UserRole.STAFF] and not user.is_staff:
+            return Response(
+                {"detail": "Access denied. Only staff users are allowed."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         refresh = RefreshToken.for_user(user)
         return Response(
             {

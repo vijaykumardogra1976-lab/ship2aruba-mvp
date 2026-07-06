@@ -163,6 +163,13 @@ class ClientLoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # Restrict login to customer role only
+        if user.role != UserRole.CUSTOMER:
+            return Response(
+                {"detail": "Access denied. This portal is only for customers."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         tokens = _issue_tokens(user)
         return Response({
             **tokens,
