@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -21,6 +21,7 @@ import { formatCurrency } from "@/lib/utils";
 import {
   addOrderPayment,
   deleteOrder,
+  deleteOrderPdf,
   editOrder,
   getOrderPayments,
   uploadOrderPdf,
@@ -145,6 +146,14 @@ export function OrderActionModals({
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => uploadOrderPdf(order!.id, file),
+    onSuccess: () => {
+      invalidateOrders();
+      onClose();
+    },
+  });
+
+  const deletePdfMutation = useMutation({
+    mutationFn: () => deleteOrderPdf(order!.id),
     onSuccess: () => {
       invalidateOrders();
       onClose();
@@ -289,6 +298,32 @@ export function OrderActionModals({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {order?.has_pdf && order.pdf_url && (
+              <div className="rounded-lg border border-violet-100 bg-violet-50/20 p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 overflow-hidden mr-2">
+                  <FileText className="h-4 w-4 text-violet-650 shrink-0" />
+                  <a
+                    href={order.pdf_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-bold text-violet-700 hover:underline truncate"
+                    title="Click to view uploaded PDF"
+                  >
+                    {order.pdf_url.split("/").pop() || "view_invoice.pdf"}
+                  </a>
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="h-7 px-2.5 text-[9px] font-black uppercase tracking-wider shrink-0 cursor-pointer"
+                  disabled={deletePdfMutation.isPending}
+                  onClick={() => deletePdfMutation.mutate()}
+                >
+                  {deletePdfMutation.isPending ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+            )}
+
             <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center">
               <input
                 ref={fileInputRef}
@@ -298,7 +333,7 @@ export function OrderActionModals({
                 onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
               />
               <p className="mb-3 text-sm text-zinc-600">
-                {selectedFile ? selectedFile.name : "Choose a PDF file to upload"}
+                {selectedFile ? selectedFile.name : order?.has_pdf ? "Choose a new PDF file to replace current one" : "Choose a PDF file to upload"}
               </p>
               <Button
                 type="button"
@@ -311,6 +346,11 @@ export function OrderActionModals({
             {uploadMutation.isError && (
               <p className="text-sm text-red-500">
                 {getApiErrorMessage(uploadMutation.error, "Failed to upload PDF.")}
+              </p>
+            )}
+            {deletePdfMutation.isError && (
+              <p className="text-sm text-red-500">
+                {getApiErrorMessage(deletePdfMutation.error, "Failed to delete PDF.")}
               </p>
             )}
             <DialogFooter>

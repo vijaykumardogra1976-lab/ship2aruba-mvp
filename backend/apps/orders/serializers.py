@@ -51,6 +51,8 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     customer = CustomerSerializer(read_only=True)
     invoice = InvoiceBriefSerializer(read_only=True)
     remaining_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    has_pdf = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -79,8 +81,21 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "is_in_myus",
             "is_completed",
             "invoice",
+            "has_pdf",
+            "pdf_url",
             "created_at",
         )
+
+    def get_has_pdf(self, obj):
+        return hasattr(obj, "document") and bool(obj.document.file)
+
+    def get_pdf_url(self, obj):
+        if hasattr(obj, "document") and obj.document.file:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(obj.document.file.url)
+            return obj.document.file.url
+        return None
 
 
 class OrderListSerializer(serializers.ModelSerializer):

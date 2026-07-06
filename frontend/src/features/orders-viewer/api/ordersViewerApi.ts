@@ -106,6 +106,11 @@ export async function uploadOrderPdf(orderId: number, file: File) {
   return data;
 }
 
+export async function deleteOrderPdf(orderId: number) {
+  const { data } = await api.delete(`/orders/${orderId}/upload-pdf/`);
+  return data;
+}
+
 export async function addOrderPayment(
   orderId: number,
   payload: AddPaymentPayload,

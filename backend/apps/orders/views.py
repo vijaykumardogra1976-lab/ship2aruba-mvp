@@ -321,6 +321,47 @@ class OrderUploadPdfView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
+    def delete(self, request, pk):
+        from apps.orders.models import OrderDocument, OrderItem
+        
+        order = get_object_or_404(Order, pk=pk)
+        
+        if hasattr(order, "document"):
+            doc = order.document
+            if doc.file:
+                doc.file.delete(save=False)
+            doc.delete()
+            
+        order.is_uploaded = False
+        order.save(update_fields=["is_uploaded", "updated_at"])
+        
+        # Remove parsed items and restore fallback items total generic item
+        order.items.all().delete()
+        
+        # Create generic fallback item
+        website_label = order.website or order.website_type or "Items"
+        fallback_label = f"{website_label} Shipment Package"
+        qty = order.number_of_items or 1
+        unit_p_awg = order.items_total / qty
+        
+        OrderItem.objects.create(
+            order=order,
+            label=fallback_label,
+            quantity=qty,
+            unit_price=unit_p_awg,
+            line_total=order.items_total,
+        )
+        
+        # Sync with invoice
+        if hasattr(order, "invoice"):
+            invoice = order.invoice
+            invoice.subtotal = order.items_total
+            invoice.total = order.items_total
+            invoice.remaining_balance = order.remaining_balance
+            invoice.save(update_fields=["subtotal", "total", "remaining_balance", "updated_at"])
+            
+        return Response({"success": True, "message": "Document deleted successfully."})
+
 
 
 def _recalculate_order_totals(order):
