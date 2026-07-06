@@ -1,13 +1,29 @@
 import axios from "axios";
 import { API_BASE_URL } from "@/config/env";
 
-let accessToken: string | null = null;
-let refreshToken: string | null = null;
+const isClient = typeof window !== "undefined" && window.location.pathname.includes("/client");
+const ACCESS_KEY = isClient ? "client_access_token" : "staff_access_token";
+const REFRESH_KEY = isClient ? "client_refresh_token" : "staff_refresh_token";
+
+let accessToken: string | null = typeof window !== "undefined" ? localStorage.getItem(ACCESS_KEY) : null;
+let refreshToken: string | null = typeof window !== "undefined" ? localStorage.getItem(REFRESH_KEY) : null;
 let onUnauthorized: (() => void) | null = null;
 
 export function setTokens(access: string | null, refresh: string | null) {
   accessToken = access;
   refreshToken = refresh;
+  if (typeof window !== "undefined") {
+    if (access) {
+      localStorage.setItem(ACCESS_KEY, access);
+    } else {
+      localStorage.removeItem(ACCESS_KEY);
+    }
+    if (refresh) {
+      localStorage.setItem(REFRESH_KEY, refresh);
+    } else {
+      localStorage.removeItem(REFRESH_KEY);
+    }
+  }
 }
 
 export function getAccessToken() {
@@ -77,7 +93,15 @@ api.interceptors.response.use(
         refresh: refreshToken,
       });
       accessToken = data.access;
-      if (data.refresh) refreshToken = data.refresh;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(ACCESS_KEY, data.access);
+      }
+      if (data.refresh) {
+        refreshToken = data.refresh;
+        if (typeof window !== "undefined") {
+          localStorage.setItem(REFRESH_KEY, data.refresh);
+        }
+      }
       processQueue(null, accessToken);
       original.headers.Authorization = `Bearer ${accessToken}`;
       return api(original);
