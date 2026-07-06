@@ -155,10 +155,12 @@ class OrderViewerService:
                 }]
 
             # ── Persist order items ────────────────────────────────────────
-            # If the order only has the generic placeholder fallback package, delete it.
-            # Otherwise, keep existing items and append the new ones.
-            fallback_items = order.items.filter(label__icontains="Shipment Package")
-            if fallback_items.exists() and order.items.count() == 1:
+            from django.db.models import Q
+            fallback_items = order.items.filter(
+                Q(label__icontains="Shipment Package") |
+                Q(label__icontains="Ship 2 Aruba Order")
+            )
+            if fallback_items.exists():
                 fallback_items.delete()
 
             import os

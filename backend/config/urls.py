@@ -18,5 +18,8 @@ urlpatterns = [
     path("api/client/", include("apps.orders.client_urls")),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+from django.views.static import serve
+
+urlpatterns += [
+    path("media/<path:path>", serve, {"document_root": settings.MEDIA_ROOT}),
+]

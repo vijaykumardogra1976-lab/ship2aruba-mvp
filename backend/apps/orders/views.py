@@ -325,31 +325,35 @@ class OrderUploadPdfView(APIView):
 
 def _recalculate_order_totals(order):
     from decimal import Decimal
+    from apps.invoices.models import Invoice
     items = order.items.all()
     if not items.exists():
         order.number_of_items = 0
-        order.items_total = Decimal("0.00")
-        order.amount_usd = Decimal("0.00")
-        order.remaining_balance = Decimal("0.00")
-        order.save(update_fields=["number_of_items", "items_total", "amount_usd", "remaining_balance"])
+        order.remaining_balance = order.items_total - order.paid_amount
+        order.save(update_fields=["number_of_items", "remaining_balance"])
+        
+        if hasattr(order, "invoice"):
+            invoice = order.invoice
+            invoice.subtotal = order.items_total
+            invoice.total = order.items_total
+            invoice.paid = order.paid_amount
+            invoice.remaining_balance = order.remaining_balance
+            invoice.save(update_fields=["subtotal", "total", "paid", "remaining_balance", "updated_at"])
         return
 
     total_qty = sum(item.quantity for item in items)
-    total_awg = sum(item.line_total for item in items)
-
-    usd_val = Decimal(str(order.amount_usd))
-    awg_val = Decimal(str(order.items_total))
-    rate = awg_val / usd_val if usd_val > 0 else Decimal("1.75")
-    if rate <= 0:
-        rate = Decimal("1.75")
-
-    total_usd = (total_awg / rate).quantize(Decimal("0.01"))
 
     order.number_of_items = total_qty
-    order.items_total = total_awg
-    order.amount_usd = total_usd
-    order.remaining_balance = total_awg - order.paid_amount
-    order.save(update_fields=["number_of_items", "items_total", "amount_usd", "remaining_balance"])
+    order.remaining_balance = order.items_total - order.paid_amount
+    order.save(update_fields=["number_of_items", "remaining_balance"])
+
+    if hasattr(order, "invoice"):
+        invoice = order.invoice
+        invoice.subtotal = order.items_total
+        invoice.total = order.items_total
+        invoice.paid = order.paid_amount
+        invoice.remaining_balance = order.remaining_balance
+        invoice.save(update_fields=["subtotal", "total", "paid", "remaining_balance", "updated_at"])
 
 
 class OrderItemListView(generics.ListCreateAPIView):

@@ -18,32 +18,60 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
 
   const paymentAmountField = register("payment_amount");
 
-  const syncItemsTotal = (type: PaymentType | "", amount: number | string | "") => {
-    if (amount === "") {
-      setValue("items_total", "", { shouldValidate: true, shouldDirty: true });
-      return;
+  const handlePaymentAmountChange = (amountVal: string | number) => {
+    const amount = amountVal === "" ? 0 : Number(amountVal);
+    const paid = paidAmount === "" ? 0 : Number(paidAmount);
+    
+    if (!Number.isNaN(amount) && !Number.isNaN(paid)) {
+      const total = paymentType === "two" ? (amount * 2) + paid : amount + paid;
+      setValue("items_total", total === 0 ? "" : total.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
     }
+  };
 
-    if (!type) {
-      return;
+  const handlePaidAmountChange = (paidVal: string | number) => {
+    const paid = paidVal === "" ? 0 : Number(paidVal);
+    const total = itemsTotal === "" ? 0 : Number(itemsTotal);
+    
+    if (!Number.isNaN(paid) && !Number.isNaN(total)) {
+      const remaining = Math.max(0, total - paid);
+      const amount = paymentType === "two" ? remaining / 2 : remaining;
+      setValue("payment_amount", amount === 0 ? "" : amount.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
     }
+  };
 
-    const numericAmount = typeof amount === "number" ? amount : Number(amount);
-
-    if (Number.isNaN(numericAmount)) {
-      setValue("items_total", "", { shouldValidate: true, shouldDirty: true });
-      return;
+  const handleItemsTotalChange = (totalVal: string | number) => {
+    const total = totalVal === "" ? 0 : Number(totalVal);
+    const paid = paidAmount === "" ? 0 : Number(paidAmount);
+    
+    if (!Number.isNaN(total) && !Number.isNaN(paid)) {
+      const remaining = Math.max(0, total - paid);
+      const amount = paymentType === "two" ? remaining / 2 : remaining;
+      setValue("payment_amount", amount === 0 ? "" : amount.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
     }
-
-    setValue("items_total", type === "two" ? numericAmount * 2 : numericAmount, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
   };
 
   const selectType = (type: PaymentType) => {
     setValue("payment_type", type, { shouldValidate: true, shouldDirty: true });
-    syncItemsTotal(type, paymentAmount);
+    
+    const total = itemsTotal === "" ? 0 : Number(itemsTotal);
+    const paid = paidAmount === "" ? 0 : Number(paidAmount);
+    if (!Number.isNaN(total) && !Number.isNaN(paid)) {
+      const remaining = Math.max(0, total - paid);
+      const amount = type === "two" ? remaining / 2 : remaining;
+      setValue("payment_amount", amount === 0 ? "" : amount.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
   };
 
   const selectMethod = (method: PaymentMethod) => {
@@ -156,7 +184,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                 {...paymentAmountField}
                 onChange={(event) => {
                   paymentAmountField.onChange(event);
-                  syncItemsTotal(paymentType, event.target.value);
+                  handlePaymentAmountChange(event.target.value);
                 }}
                 className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
@@ -182,7 +210,11 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                 min={0}
                 step="0.01"
                 placeholder="Enter items total amount"
-                {...register("items_total")}
+                {...register("items_total", {
+                  onChange: (event) => {
+                    handleItemsTotalChange(event.target.value);
+                  }
+                })}
                 className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>
@@ -206,8 +238,8 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                 step="0.01"
                 placeholder="Enter paid amount"
                 {...register("paid_amount", {
-                  onChange: () => {
-                    // trigger watch update for real-time balance recalculation
+                  onChange: (event) => {
+                    handlePaidAmountChange(event.target.value);
                   },
                 })}
                 className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
