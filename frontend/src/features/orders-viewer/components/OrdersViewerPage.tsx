@@ -135,8 +135,8 @@ export function OrdersViewerPage() {
   const closeAction = () => {
     setActiveAction(null);
     setActiveOrder(null);
-    // Refresh selected order details if edited
-    if (selectedOrder && activeAction === "edit") {
+    // Refresh selected order details if edited or PDF was uploaded/deleted
+    if (selectedOrder && (activeAction === "edit" || activeAction === "upload")) {
       refetch().then((res) => {
         const updated = res.data?.results.find((o) => o.id === selectedOrder.id);
         if (updated) setSelectedOrder(updated);

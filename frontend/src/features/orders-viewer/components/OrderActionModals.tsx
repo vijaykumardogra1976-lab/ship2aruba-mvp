@@ -148,6 +148,7 @@ export function OrderActionModals({
     mutationFn: (file: File) => uploadOrderPdf(order!.id, file),
     onSuccess: () => {
       invalidateOrders();
+      void queryClient.invalidateQueries({ queryKey: ["order-items", order!.id] });
       onClose();
     },
   });
@@ -156,6 +157,7 @@ export function OrderActionModals({
     mutationFn: () => deleteOrderPdf(order!.id),
     onSuccess: () => {
       invalidateOrders();
+      void queryClient.invalidateQueries({ queryKey: ["order-items", order!.id] });
       onClose();
     },
   });
@@ -324,7 +326,15 @@ export function OrderActionModals({
               </div>
             )}
 
-            <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "rounded-lg border border-dashed p-6 text-center transition-all duration-200 cursor-pointer",
+                selectedFile
+                  ? "border-emerald-500 bg-emerald-50/10 hover:bg-emerald-50/20"
+                  : "border-zinc-300 bg-zinc-50 hover:bg-zinc-100/70"
+              )}
+            >
               <input
                 ref={fileInputRef}
                 type="file"
@@ -332,16 +342,35 @@ export function OrderActionModals({
                 className="hidden"
                 onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
               />
-              <p className="mb-3 text-sm text-zinc-600">
-                {selectedFile ? selectedFile.name : order?.has_pdf ? "Choose a new PDF file to replace current one" : "Choose a PDF file to upload"}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Choose File
-              </Button>
+              {selectedFile ? (
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <p className="text-xs font-bold text-emerald-700 truncate max-w-[280px]">
+                    {selectedFile.name}
+                  </p>
+                  <p className="text-[10px] text-emerald-600 font-semibold leading-none">
+                    Ready to upload ({(selectedFile.size / 1024).toFixed(1)} KB) — Click to change
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="mb-3 text-sm text-zinc-600">
+                    {order?.has_pdf ? "Choose a new PDF file to replace current one" : "Choose a PDF file to upload"}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    Choose File
+                  </Button>
+                </>
+              )}
             </div>
             {uploadMutation.isError && (
               <p className="text-sm text-red-500">
