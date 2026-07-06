@@ -26,6 +26,8 @@ export interface OrderListItem {
   is_uploaded: boolean;
   is_in_myus: boolean;
   is_completed: boolean;
+  is_new_client: boolean;
+  is_urgent: boolean;
   has_pdf: boolean;
   pdf_url: string | null;
   placed_by: PlacedBy | null;

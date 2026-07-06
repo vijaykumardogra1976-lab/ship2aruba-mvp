@@ -199,9 +199,21 @@ export function OrdersTable({
                       <div className="flex items-center gap-3">
                         <AvatarInitial name={order.customer.name} />
                         <div>
-                          <p className="text-xs font-black text-slate-800 leading-tight">
-                            {order.customer.name}
-                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs font-black text-slate-800 leading-tight">
+                              {order.customer.name}
+                            </p>
+                            {order.is_urgent && (
+                              <span className="rounded bg-rose-50 border border-rose-100 px-1.5 py-0.5 text-[8px] font-black text-rose-600 uppercase tracking-wider leading-none shrink-0 shadow-2xs">
+                                Urgent
+                              </span>
+                            )}
+                            {order.is_new_client && (
+                              <span className="rounded bg-violet-50 border border-violet-100 px-1.5 py-0.5 text-[8px] font-black text-violet-600 uppercase tracking-wider leading-none shrink-0 shadow-2xs">
+                                New Client
+                              </span>
+                            )}
+                          </div>
                           {order.customer.email && (
                             <p className="text-[10px] font-normal text-slate-550 mt-0.5">
                               {order.customer.email}

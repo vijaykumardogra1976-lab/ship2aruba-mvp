@@ -129,6 +129,8 @@ class OrderListSerializer(serializers.ModelSerializer):
             "is_uploaded",
             "is_in_myus",
             "is_completed",
+            "is_new_client",
+            "is_urgent",
             "has_pdf",
             "pdf_url",
             "placed_by",

@@ -89,8 +89,8 @@ export function OrderDetailsPanel({
     <div className="flex flex-col h-[calc(100vh-220px)] bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_rgb(0,0,0,0.02)] overflow-hidden">
       {/* Panel Header */}
       <div className="flex items-center justify-between border-b border-slate-50 px-4.5 py-3 bg-slate-50/20">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xs font-black text-slate-800 tracking-tight">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <h2 className="text-xs font-black text-slate-800 tracking-tight mr-0.5">
             Order #{order.order_number.split("-").pop()?.slice(-4)}
           </h2>
           <span className={cn(
@@ -99,6 +99,16 @@ export function OrderDetailsPanel({
           )}>
             {statusInfo.label}
           </span>
+          {order.is_urgent && (
+            <span className="inline-flex items-center rounded-full bg-rose-50 border border-rose-100 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none text-rose-600">
+              Urgent
+            </span>
+          )}
+          {order.is_new_client && (
+            <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-100 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none text-violet-650">
+              New Client
+            </span>
+          )}
         </div>
       </div>
 
