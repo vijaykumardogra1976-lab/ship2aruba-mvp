@@ -12,8 +12,8 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
   const { register, setValue, watch, formState: { errors } } = form;
   const paymentType = watch("payment_type");
   const paymentAmount = watch("payment_amount");
-  const itemsTotal = watch("items_total") || 0;
-  const paidAmount = watch("paid_amount") || 0;
+  const itemsTotal = watch("items_total");
+  const paidAmount = watch("paid_amount");
   const paymentMethod = watch("payment_method");
 
   const paymentAmountField = register("payment_amount");
@@ -24,7 +24,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
     
     if (!Number.isNaN(amount) && !Number.isNaN(paid)) {
       const total = paymentType === "two" ? (amount * 2) + paid : amount + paid;
-      setValue("items_total", total === 0 ? "" : total.toString(), {
+      setValue("items_total", total === 0 ? "" : total, {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -38,7 +38,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
     if (!Number.isNaN(paid) && !Number.isNaN(total)) {
       const remaining = Math.max(0, total - paid);
       const amount = paymentType === "two" ? remaining / 2 : remaining;
-      setValue("payment_amount", amount === 0 ? "" : amount.toString(), {
+      setValue("payment_amount", amount === 0 ? "" : amount, {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -52,7 +52,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
     if (!Number.isNaN(total) && !Number.isNaN(paid)) {
       const remaining = Math.max(0, total - paid);
       const amount = paymentType === "two" ? remaining / 2 : remaining;
-      setValue("payment_amount", amount === 0 ? "" : amount.toString(), {
+      setValue("payment_amount", amount === 0 ? "" : amount, {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -67,7 +67,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
     if (!Number.isNaN(total) && !Number.isNaN(paid)) {
       const remaining = Math.max(0, total - paid);
       const amount = type === "two" ? remaining / 2 : remaining;
-      setValue("payment_amount", amount === 0 ? "" : amount.toString(), {
+      setValue("payment_amount", amount === 0 ? "" : amount, {
         shouldValidate: true,
         shouldDirty: true,
       });
