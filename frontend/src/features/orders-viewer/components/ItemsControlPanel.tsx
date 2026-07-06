@@ -260,19 +260,6 @@ export function ItemsControlPanel() {
           </div>
 
           <div className="flex items-center gap-3 self-end sm:self-center">
-            {/* PDF parsing button */}
-            <label className="inline-flex h-9 items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 px-4 text-xs font-bold text-teal-700 cursor-pointer shadow-xs transition-colors">
-              <Upload className="h-3.5 w-3.5" />
-              <span>{uploading ? "Importing..." : "Import Items (PDF)"}</span>
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={handlePdfUpload}
-                disabled={uploading}
-                className="hidden"
-              />
-            </label>
-
             <button
               onClick={handleOpenCreate}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-750 px-4 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer"
