@@ -1,10 +1,12 @@
 export function calculateRemainingBalance(
   itemsTotal: number | string | "",
   paidAmount: number | string | "",
+  paymentAmount: number | string | "" = 0,
 ): number {
   const total = itemsTotal === "" ? 0 : Number(itemsTotal);
   const paid = paidAmount === "" ? 0 : Number(paidAmount);
-  return Math.max(0, (isNaN(total) ? 0 : total) - (isNaN(paid) ? 0 : paid));
+  const payment = paymentAmount === "" ? 0 : Number(paymentAmount);
+  return Math.max(0, (isNaN(total) ? 0 : total) - (isNaN(paid) ? 0 : paid) - (isNaN(payment) ? 0 : payment));
 }
 
 export function getTodayDateString(): string {

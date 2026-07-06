@@ -156,6 +156,10 @@ ORDER_EDIT_AUTHORIZATION_PASSWORD = os.getenv("ORDER_EDIT_AUTHORIZATION_PASSWORD
 # ─── AI Document Parser ───────────────────────────────────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
+# ─── URLs ─────────────────────────────────────────────────────────────────────
+CLIENT_PORTAL_URL = os.getenv("CLIENT_PORTAL_URL", "http://localhost:5173/client")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+
 # ─── Client OTP Configuration ──────────────────────────────────────────────
 # Change this to "apps.authentication.otp_backends.SmsOTPBackend" when SMS is ready.
 OTP_DELIVERY_BACKEND = os.getenv(

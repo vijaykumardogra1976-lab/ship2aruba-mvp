@@ -123,7 +123,7 @@ class EmailService:
                 f"The status of the following item has been updated:\n"
                 f"Item: {item.label}\n"
                 f"New Status: {new_status}\n\n"
-                f"You can log into your client portal at http://localhost:5173/client/ to view the full details and track your shipment.\n\n"
+                f"You can log into your client portal at {settings.CLIENT_PORTAL_URL}/ to view the full details and track your shipment.\n\n"
                 f"Thank you,\n"
                 f"Ship2Aruba Team"
             )
@@ -138,6 +138,7 @@ class EmailService:
                     "tracking_number": item.tracking_number or item.fedex_tracking_number or "Not available yet",
                     "company_phone": settings.COMPANY_PHONE,
                     "company_name": settings.COMPANY_NAME,
+                    "client_portal_url": settings.CLIENT_PORTAL_URL,
                 }
             )
 

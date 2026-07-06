@@ -50,7 +50,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
     setValue("payment_method", method, { shouldValidate: true, shouldDirty: true });
   };
 
-  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paymentAmount));
+  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paymentAmount) - Number(paidAmount));
 
   const formatCurrency = (val: string | number) => {
     const num = Number(val);
@@ -194,7 +194,6 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             )}
           </div>
 
-          {/* Paid Amount */}
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="paid_amount">
               Paid Amount (AWG) *
@@ -206,7 +205,11 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                 min={0}
                 step="0.01"
                 placeholder="Enter paid amount"
-                {...register("paid_amount")}
+                {...register("paid_amount", {
+                  onChange: () => {
+                    // trigger watch update for real-time balance recalculation
+                  },
+                })}
                 className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>

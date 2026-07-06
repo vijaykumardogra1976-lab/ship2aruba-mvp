@@ -47,14 +47,6 @@ class OrderService:
                 created_by=user,
             )
 
-            OrderItem.objects.create(
-                order=order,
-                label=f"Ship 2 Aruba Order ({order.number_of_items} Items)",
-                quantity=1,
-                unit_price=order.items_total,
-                line_total=order.items_total,
-            )
-
             payment = Payment.objects.create(
                 order=order,
                 sequence=1,

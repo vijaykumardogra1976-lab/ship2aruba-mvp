@@ -78,7 +78,7 @@ export function OrderDetailsPanel({
     if (item.product_image) {
       return item.product_image.startsWith("http")
         ? item.product_image
-        : `http://127.0.0.1:8000${item.product_image}`;
+        : `${import.meta.env.VITE_API_BASE_URL || ""}${item.product_image}`;
     }
     return item.image_url;
   };

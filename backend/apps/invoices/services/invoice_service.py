@@ -37,7 +37,7 @@ class InvoiceService:
                     "quantity": item.quantity,
                     "unit_price": item.unit_price,
                     "line_total": item.line_total,
-                    "image_url": f"http://127.0.0.1:8000{item.product_image.url}" if item.product_image else item.image_url,
+                    "image_url": f"{settings.BACKEND_URL}{item.product_image.url}" if item.product_image else item.image_url,
                 }
                 for item in order.items.all()
             ]
