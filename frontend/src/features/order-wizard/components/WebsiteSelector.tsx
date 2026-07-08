@@ -1,4 +1,4 @@
-import { Box, Calendar, Check, ChevronDown, ShoppingCart, UploadCloud, Info } from "lucide-react";
+import { Box, Calendar, Check, ChevronDown, ShoppingCart, UploadCloud } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
