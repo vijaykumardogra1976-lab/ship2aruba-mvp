@@ -34,13 +34,13 @@
     .text-center { text-align: center; }
 
     /* Totals */
-    .totals-wrap { text-align: right; }
-    .totals-table { display: inline-table; min-width: 260px; }
+    .totals-wrap { margin-top: 24px; }
+    .totals-table { width: 100%; border-collapse: collapse; }
     .totals-row { display: table-row; }
-    .totals-label { display: table-cell; padding: 5px 20px 5px 0; font-size: 13px; color: #555555; }
-    .totals-val { display: table-cell; padding: 5px 0; font-size: 13px; color: #333333; text-align: right; }
-    .totals-divider { border: none; border-top: 1px solid #e0e0e0; margin: 10px 0; }
-    .totals-due-label { font-size: 15px; font-weight: bold; color: #1a1a1a; }
+    .totals-label { display: table-cell; padding: 6px 0; font-size: 13px; color: #555555; text-align: left; }
+    .totals-val { display: table-cell; padding: 6px 0; font-size: 13px; color: #333333; text-align: right; }
+    .totals-divider { border: none; border-top: 1px solid #e0e0e0; margin: 12px 0; }
+    .totals-due-label { font-size: 15px; font-weight: bold; color: #1a1a1a; text-align: left; }
     .totals-due-val { font-size: 15px; font-weight: bold; color: #1a1a1a; text-align: right; }
 
     /* Footer */
@@ -51,41 +51,45 @@
 <div class="invoice-wrap">
 
   <!-- Header -->
-  <div class="inv-header">
-    <div class="inv-header-left">
-      <div class="brand-name">Ship2Aruba</div>
-      <div class="brand-sub">{{ company_address }}<br>Tel: {{ company_phone }}</div>
-    </div>
-    <div class="inv-header-right">
-      <div class="inv-title">INVOICE</div>
-      <div class="inv-meta">
-        <strong>Invoice No:</strong> {{ invoice_number }}<br>
-        <strong>Order No:</strong> {{ order_number }}<br>
-        <strong>Date:</strong> {{ issued_at|date:"d F Y" }}<br>
-        <strong>Payment Method:</strong> {{ payment_method }}
-      </div>
-    </div>
-  </div>
+  <table style="width: 100%; border-bottom: 2px solid #1a1a1a; padding-bottom: 20px; margin-bottom: 28px; border-collapse: collapse; border: none;">
+    <tr>
+      <td style="vertical-align: top; border: none; padding: 0;">
+        <div class="brand-name">Ship2Aruba</div>
+        <div class="brand-sub">{{ company_address }}<br>Tel: {{ company_phone }}</div>
+      </td>
+      <td style="text-align: right; vertical-align: top; border: none; padding: 0;">
+        <div class="inv-title">INVOICE</div>
+        <div class="inv-meta">
+          <strong>Invoice No:</strong> {{ invoice_number }}<br>
+          <strong>Order No:</strong> {{ order_number }}<br>
+          <strong>Date:</strong> {{ issued_at|date:"d F Y" }}<br>
+          <strong>Payment Method:</strong> {{ payment_method }}
+        </div>
+      </td>
+    </tr>
+  </table>
 
   <!-- Bill To / Bill From -->
-  <div class="parties">
-    <div class="party-col">
-      <div class="party-label">Bill To</div>
-      <div class="party-name">{{ customer_name }}</div>
-      <div class="party-detail">
-        {{ customer_phone }}<br>
-        {% if customer_email %}{{ customer_email }}{% endif %}
-      </div>
-    </div>
-    <div class="party-col" style="text-align:right;">
-      <div class="party-label">Bill From</div>
-      <div class="party-name">{{ company_name }}</div>
-      <div class="party-detail">
-        {{ company_address }}<br>
-        {{ company_phone }}
-      </div>
-    </div>
-  </div>
+  <table style="width: 100%; margin-bottom: 28px; border-collapse: collapse; border: none;">
+    <tr>
+      <td style="width: 50%; vertical-align: top; border: none; padding: 0;">
+        <div class="party-label">Bill To</div>
+        <div class="party-name">{{ customer_name }}</div>
+        <div class="party-detail">
+          {{ customer_phone }}<br>
+          {% if customer_email %}{{ customer_email }}{% endif %}
+        </div>
+      </td>
+      <td style="width: 50%; vertical-align: top; text-align: right; border: none; padding: 0;">
+        <div class="party-label">Bill From</div>
+        <div class="party-name">{{ company_name }}</div>
+        <div class="party-detail">
+          {{ company_address }}<br>
+          {{ company_phone }}
+        </div>
+      </td>
+    </tr>
+  </table>
 
   <!-- Line Items -->
   <table class="items">
@@ -98,60 +102,48 @@
       </tr>
     </thead>
     <tbody>
-      {% for item in items %}
       <tr>
         <td>
-          <table style="width: 100%; border: none; padding: 0; margin: 0;">
-            <tr>
-              {% if item.image_url %}
-              <td style="width: 50px; vertical-align: top; border: none; padding: 0;">
-                <img src="{{ item.image_url }}" alt="Item" style="width: 40px; height: 40px; border-radius: 4px;" />
-              </td>
-              {% endif %}
-              <td style="vertical-align: top; border: none; padding: 0;">
-                <div class="item-name">{{ item.label }}</div>
-                <div class="item-sub">Shipped to Aruba</div>
-              </td>
-            </tr>
-          </table>
-        </td>
-        <td class="text-center">{{ item.quantity }}</td>
-        <td class="text-right">{{ item.unit_price }} AWG</td>
-        <td class="text-right">{{ item.line_total }} AWG</td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td>
-          <div class="item-name">Ship2Aruba Order</div>
+          <div class="item-name">{{ fallback_platform }} Order ({{ number_of_items }} Items)</div>
           <div class="item-sub">{{ number_of_items }} item(s) · Shipped to Aruba</div>
         </td>
         <td class="text-center">1</td>
         <td class="text-right">{{ items_total }} AWG</td>
         <td class="text-right">{{ items_total }} AWG</td>
       </tr>
-      {% endfor %}
     </tbody>
   </table>
 
   <!-- Totals -->
   <div class="totals-wrap">
-    <div class="totals-table">
-      <div class="totals-row">
-        <div class="totals-label">Subtotal</div>
-        <div class="totals-val">{{ subtotal }} AWG</div>
-      </div>
-      <div class="totals-row">
-        <div class="totals-label">Amount Paid</div>
-        <div class="totals-val">{{ paid }} AWG</div>
-      </div>
-    </div>
+    <table class="totals-table">
+      <tr class="totals-row">
+        <td class="totals-label" style="font-weight: bold; color: #1a1a1a; font-size: 14px; text-transform: uppercase;">TOTAL</td>
+        <td class="totals-val" style="font-weight: bold; color: #1a1a1a; font-size: 14px;">{{ total }} AWG</td>
+      </tr>
+      {% for p in payments %}
+      <tr class="totals-row">
+        <td class="totals-label" style="color: #555555; font-size: 13px;">
+          Payment on {{ p.paid_at|date:"d F Y" }} using {{ p.payment_method }}
+        </td>
+        <td class="totals-val" style="color: #333333; font-size: 13px;">{{ p.amount }} AWG</td>
+      </tr>
+      {% empty %}
+      <tr class="totals-row">
+        <td class="totals-label" style="color: #555555; font-size: 13px;">
+          Payment using {{ payment_method }}
+        </td>
+        <td class="totals-val" style="color: #333333; font-size: 13px;">{{ paid }} AWG</td>
+      </tr>
+      {% endfor %}
+    </table>
     <hr class="totals-divider">
-    <div class="totals-table">
-      <div class="totals-row">
-        <div class="totals-label totals-due-label">Amount Due</div>
-        <div class="totals-val totals-due-val">{{ remaining_balance }} AWG</div>
-      </div>
-    </div>
+    <table class="totals-table">
+      <tr class="totals-row">
+        <td class="totals-label totals-due-label" style="text-transform: uppercase;">AMOUNT DUE</td>
+        <td class="totals-val totals-due-val">{{ remaining_balance }} AWG</td>
+      </tr>
+    </table>
   </div>
 
   <!-- Footer -->

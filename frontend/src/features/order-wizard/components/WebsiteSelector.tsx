@@ -238,11 +238,15 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
       <div className="w-80 shrink-0 border-l border-slate-100 pl-5 flex flex-col justify-center">
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-800">Upload Document (Optional)</span>
-            <Info className="h-3.5 w-3.5 text-violet-500 cursor-pointer" />
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              Upload Document
+              <span className="inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 border border-slate-200 uppercase tracking-wide">
+                Optional
+              </span>
+            </span>
           </div>
           <p className="text-[10px] text-slate-500 leading-normal">
-            Upload PDF, screenshot, or photo of the order to auto-extract item details via AI.
+            Upload PDF, screenshot, or photo of the order to auto-extract item details via AI. <span className="text-violet-600 font-bold block mt-0.5">You can skip this and click "Next" directly.</span>
           </p>
           <div
             onDragEnter={handleDrag}

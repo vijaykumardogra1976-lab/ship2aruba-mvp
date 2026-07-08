@@ -163,7 +163,118 @@ export function OrdersViewerPage() {
   };
 
   const handlePrintAction = () => {
-    window.print();
+    if (!receiptInvoice) return;
+    const inv = receiptInvoice;
+
+    const getFormattedDate = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = d.toLocaleDateString("en-US", { month: "long" });
+      const year = d.getFullYear();
+      return `${day} ${month}, ${year}`;
+    };
+
+    const issuedDate = getFormattedDate(inv.issued_at);
+
+    const paymentsHtml = inv.payments && inv.payments.length > 0
+      ? inv.payments.map(p => `
+          <tr>
+            <td style="padding:4px 0; color:#1e293b;">Payment on ${getFormattedDate(p.paid_at)} using ${p.payment_method}</td>
+            <td style="padding:4px 0; text-align:right; color:#1e293b;">${p.amount} AWG</td>
+          </tr>`).join("")
+      : `<tr>
+          <td style="padding:4px 0; color:#1e293b;">Payment using ${inv.payment_method}</td>
+          <td style="padding:4px 0; text-align:right; color:#1e293b;">${inv.paid} AWG</td>
+        </tr>`;
+
+    const lineItemsHtml = inv.line_items.map(item => `
+      <tr style="border-bottom:1px solid #e2e8f0;">
+        <td style="padding:8px 0;">${item.label}</td>
+        <td style="padding:8px 0; text-align:center;">${item.quantity}</td>
+        <td style="padding:8px 0; text-align:right;">${item.price}</td>
+        <td style="padding:8px 0; text-align:right;">${item.amount}</td>
+      </tr>`).join("");
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Invoice ${inv.invoice_number}</title>
+  <style>
+    @page { size: A4; margin: 1.5cm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; color: #0f172a; background: white; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border: none; }
+    p { margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <table style="width:100%; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #e2e8f0;">
+    <tr>
+      <td style="vertical-align:top; text-align:left;">
+        <div style="font-size:24px; font-weight:700;">Ship2Aruba</div>
+      </td>
+      <td style="vertical-align:top; text-align:right; font-size:13px;">
+        <p><strong>Invoice #${inv.invoice_number}</strong></p>
+        <p>Order # ${inv.order_number}</p>
+        <p>Date of Invoice: ${issuedDate}</p>
+        <p><strong>Amount Due: ${inv.amount_due} AWG</strong></p>
+      </td>
+    </tr>
+  </table>
+
+  <table style="width:100%; margin-bottom:32px;">
+    <tr>
+      <td style="width:50%; vertical-align:top; text-align:left; font-size:13px;">
+        <p style="font-size:11px; font-weight:600; text-transform:uppercase; color:#1e293b; margin-bottom:6px;">Invoice To:</p>
+        <p>${inv.customer_name}</p>
+        <p>${inv.customer_phone}</p>
+        ${inv.customer_email ? `<p>${inv.customer_email}</p>` : ""}
+      </td>
+      <td style="width:50%; vertical-align:top; text-align:right; font-size:13px;">
+        <p style="font-size:11px; font-weight:600; text-transform:uppercase; color:#1e293b; margin-bottom:6px;">Invoice From:</p>
+        <p>${inv.company.name}</p>
+        <p>${inv.company.address}</p>
+        <p>${inv.company.phone}</p>
+      </td>
+    </tr>
+  </table>
+
+  <p style="font-weight:600; margin-bottom:8px;">Your Invoice</p>
+  <table style="width:100%; margin-bottom:24px; font-size:13px;">
+    <thead>
+      <tr style="border-bottom:2px solid #e2e8f0;">
+        <th style="padding:6px 0; text-align:left; font-size:11px; text-transform:uppercase; color:#1e293b;">Items</th>
+        <th style="padding:6px 0; text-align:center; font-size:11px; text-transform:uppercase; color:#1e293b;">Quantity</th>
+        <th style="padding:6px 0; text-align:right; font-size:11px; text-transform:uppercase; color:#1e293b;">Price (AWG)</th>
+        <th style="padding:6px 0; text-align:right; font-size:11px; text-transform:uppercase; color:#1e293b;">Amount (AWG)</th>
+      </tr>
+    </thead>
+    <tbody>${lineItemsHtml}</tbody>
+  </table>
+
+  <table style="width:100%; font-size:13px;">
+    <tbody>
+      <tr>
+        <td style="padding:4px 0; font-weight:700;">TOTAL:</td>
+        <td style="padding:4px 0; text-align:right; font-weight:700;">${inv.total} AWG</td>
+      </tr>
+      ${paymentsHtml}
+      <tr>
+        <td style="padding:8px 0 4px; font-weight:700; border-top:1px solid #e2e8f0;">AMOUNT DUE:</td>
+        <td style="padding:8px 0 4px; text-align:right; font-weight:700; border-top:1px solid #e2e8f0;">${inv.remaining_balance} AWG</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank", "width=794,height=1123");
+    if (!win) { alert("Please allow popups to print the invoice."); return; }
+    win.document.write(html);
+    win.document.close();
+    win.onload = () => { win.focus(); win.print(); win.close(); };
   };
 
   // CSV Export feature
@@ -341,20 +452,20 @@ export function OrdersViewerPage() {
 
       {/* Printable Receipt Modal */}
       <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
-        <DialogContent className="max-w-3xl bg-white p-6 md:p-8 overflow-y-auto max-h-[85vh]">
-          <DialogHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-3">
-            <DialogTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-violet-600" />
+        <DialogContent className="max-w-2xl bg-white p-4 md:p-5 overflow-y-auto max-h-[92vh]">
+          <DialogHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-2">
+            <DialogTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-violet-600" />
               Invoice Receipt
             </DialogTitle>
           </DialogHeader>
           
           {receiptInvoice && (
-            <div className="py-4">
-              <div className="rounded-xl border border-slate-100 p-4 bg-slate-50/20 shadow-xs mb-6">
+            <div className="py-2">
+              <div className="mb-3">
                 <InvoicePreview invoice={receiptInvoice} />
               </div>
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-3 border-t border-slate-100 pt-3">
                 <Button variant="outline" onClick={() => setReceiptOpen(false)} className="rounded-xl font-bold text-xs uppercase tracking-wider">
                   Close
                 </Button>
@@ -367,26 +478,6 @@ export function OrdersViewerPage() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Global CSS for hiding non-invoice elements during window.print() */}
-      {receiptOpen && receiptInvoice && (
-        <style dangerouslySetInnerHTML={{__html: `
-          @media print {
-            body * {
-              visibility: hidden;
-            }
-            .print\\:static, .print\\:static * {
-              visibility: visible;
-            }
-            .print\\:static {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-            }
-          }
-        `}} />
-      )}
     </div>
   );
 }

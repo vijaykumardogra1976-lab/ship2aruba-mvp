@@ -66,15 +66,7 @@ class OrderService:
                 changed_by=user,
             )
 
-            if order.payment_type == PaymentType.TWO:
-                Payment.objects.create(
-                    order=order,
-                    sequence=2,
-                    amount=order.payment_amount,
-                    payment_method=order.payment_method,
-                    payment_type=order.payment_type,
-                    recorded_by=user,
-                )
+
 
             OrderStatusHistory.objects.create(
                 order=order,

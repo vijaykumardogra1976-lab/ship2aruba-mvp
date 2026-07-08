@@ -94,6 +94,11 @@ export interface InvoiceData {
     price: string;
     amount: string;
   }>;
+  payments: Array<{
+    amount: string;
+    payment_method: string;
+    paid_at: string;
+  }>;
   company: {
     name: string;
     address: string;
