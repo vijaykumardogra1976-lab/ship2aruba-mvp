@@ -183,7 +183,9 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
                 id="order_date"
                 type="date"
                 {...register("order_date")}
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
+                readOnly
+                tabIndex={-1}
+                className="h-8.5 w-full rounded-lg border border-slate-200 bg-slate-50 pl-8.5 pr-3 text-xs font-semibold text-slate-500 focus:outline-hidden pointer-events-none select-none"
               />
             </div>
             {errors.order_date && (
