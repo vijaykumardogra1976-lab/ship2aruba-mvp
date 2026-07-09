@@ -63,6 +63,17 @@ export function OrderWizard() {
   const [createdOrder, setCreatedOrder] = useState<OrderResponse | null>(null);
 
   const customer = form.watch("customer");
+  
+  // Payment Validation
+  const paymentType = form.watch("payment_type");
+  const paymentAmount = form.watch("payment_amount");
+  const paidAmount = form.watch("paid_amount");
+  
+  const computedItemsTotal = paymentType === "two"
+    ? Number(paymentAmount || 0) * 2
+    : Number(paymentAmount || 0);
+    
+  const isPaymentInvalid = step === 3 && (Number(paidAmount || 0) > computedItemsTotal);
 
   useEffect(() => {
     const sub = form.watch((data) => {
@@ -324,8 +335,8 @@ export function OrderWizard() {
                     <Button
                       type="button"
                       onClick={() => void handleNext()}
-                      disabled={isCreatingCustomer}
-                      className="h-9 bg-violet-600 hover:bg-violet-750 px-5 text-xs font-semibold text-white shadow-sm transition cursor-pointer"
+                      disabled={isCreatingCustomer || isPaymentInvalid}
+                      className="h-9 bg-violet-600 hover:bg-violet-750 px-5 text-xs font-semibold text-white shadow-sm transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isCreatingCustomer ? "Creating Customer..." : "Next"}
                       <ChevronRight className="h-4 w-4" />

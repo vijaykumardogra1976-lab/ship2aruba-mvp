@@ -322,9 +322,6 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
               );
             })}
           </div>
-          {errors.payment_method && (
-            <p className="text-[10px] text-red-500 font-semibold">{errors.payment_method.message}</p>
-          )}
         </div>
 
         {/* Payment Alert Banner */}
