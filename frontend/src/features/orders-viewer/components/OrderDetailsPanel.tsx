@@ -41,7 +41,8 @@ function getStatusBadge(order: OrderListItem) {
   if (balance <= 0) {
     return { label: "Paid", classes: "bg-emerald-55/10 text-emerald-700 border-emerald-200" };
   }
-  return { label: "Pending", classes: "bg-amber-55/10 text-amber-750 border-amber-200" };
+  // No badge for unpaid orders — balance info is already in the panel body
+  return null;
 }
 
 function formatCurrencyInt(value: number | string, currency = "AWG"): string {
@@ -93,12 +94,14 @@ export function OrderDetailsPanel({
           <h2 className="text-xs font-black text-slate-800 tracking-tight mr-0.5">
             Order #{order.order_number.split("-").pop()?.slice(-4)}
           </h2>
-          <span className={cn(
-            "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none",
-            statusInfo.classes
-          )}>
-            {statusInfo.label}
-          </span>
+          {statusInfo && (
+            <span className={cn(
+              "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none",
+              statusInfo.classes
+            )}>
+              {statusInfo.label}
+            </span>
+          )}
           {order.is_urgent && (
             <span className="inline-flex items-center rounded-full bg-rose-50 border border-rose-100 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none text-rose-600">
               Urgent
@@ -256,7 +259,7 @@ export function OrderDetailsPanel({
             </div>
           )}
 
-          {order.payment_type === "two" && (
+          {order.payment_type === "two" && balanceVal > 0 && (
             <div className="pt-1.5 border-t border-slate-50 mt-1">
               <button
                 onClick={onAddPayment}

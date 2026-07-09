@@ -51,7 +51,8 @@ class InvoiceService:
             "paid": invoice.paid,
             "remaining_balance": invoice.remaining_balance,
             "payment_method": payment_method_display,
-            "payment_amount": order.paid_amount,
+            # paid = what customer has paid so far (from invoice.paid)
+            # remaining_balance = items_total - paid
             "fallback_platform": platform_name,
             "payments": payments_list,
             "items": [

@@ -71,6 +71,15 @@ export function OrderWizard() {
     return () => sub.unsubscribe();
   }, [form, save]);
 
+  // Reset form + wizard step when user navigates away from Create Order page
+  useEffect(() => {
+    return () => {
+      form.reset(defaultValues);
+      resetWizard();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const mutation = useMutation({
     mutationFn: createOrder,
     onSuccess: async (order) => {
@@ -102,14 +111,9 @@ export function OrderWizard() {
     form.setValue("new_customer_name", "");
     form.setValue("new_customer_phone", "");
     form.setValue("new_customer_email", "");
-    
-    // Auto-select "New Client" if the customer has zero order history
-    if (c) {
-      const isNew = c.orders_count === 0 || c.orders_count === undefined;
-      form.setValue("is_new_client", isNew, { shouldDirty: true });
-    } else {
-      form.setValue("is_new_client", false, { shouldDirty: true });
-    }
+    // Never auto-set is_new_client for existing customers — staff decides manually
+    // (is_new_client stays as whatever it was, or false if just reset)
+    form.setValue("is_new_client", false, { shouldDirty: true });
   };
 
   const handleSubmit = async () => {

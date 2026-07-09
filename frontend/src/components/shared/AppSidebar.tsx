@@ -13,8 +13,6 @@ import {
   Users,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { listOrders } from "@/features/orders-viewer/api/ordersViewerApi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -105,15 +103,6 @@ export function AppSidebar() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
-  // Fetch only the count of all orders (first page, size 1)
-  const { data } = useQuery({
-    queryKey: ["orders", "total-count"],
-    queryFn: () => listOrders({ page: 1, page_size: 1 }),
-    refetchInterval: 15000, // keep it relatively fresh
-  });
-
-  const orderCount = data?.count ?? 0;
-
   const handleLogout = async () => {
     await logout();
     navigate("/login");
@@ -124,7 +113,6 @@ export function AppSidebar() {
       label: "Orders Viewer",
       icon: LayoutGrid,
       to: "/orders",
-      badge: orderCount,
       enabled: true,
     },
     {

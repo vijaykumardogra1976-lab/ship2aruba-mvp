@@ -41,16 +41,19 @@ function AvatarInitial({ name }: { name: string }) {
 
 function formatOrderDateAndTime(dateStr: string) {
   try {
+    // order_date is "YYYY-MM-DD" — parse parts directly to avoid UTC midnight
+    // timezone shift (e.g. "2026-07-09" → 00:00 UTC → 05:30 IST)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [year, month, day] = dateStr.split("-").map(Number);
+      const localDate = new Date(year, month - 1, day);
+      const dateOpts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
+      return { date: localDate.toLocaleDateString("en-US", dateOpts), time: "" };
+    }
+    // Fallback for full datetime strings
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return { date: dateStr, time: "" };
-    
     const dateOpts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
-    const timeOpts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
-    
-    return {
-      date: d.toLocaleDateString("en-US", dateOpts),
-      time: d.toLocaleTimeString("en-US", timeOpts),
-    };
+    return { date: d.toLocaleDateString("en-US", dateOpts), time: "" };
   } catch {
     return { date: dateStr, time: "" };
   }
@@ -147,7 +150,7 @@ export function OrdersTable({
             <tr className="border-b border-slate-100 bg-slate-50/50">
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Order ID</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Customer</th>
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Date & Time</th>
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Date</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Finances (AWG)</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Status</th>
             </tr>
@@ -227,13 +230,13 @@ export function OrdersTable({
                       </div>
                     </td>
 
-                    {/* Date & Time */}
+                    {/* Date */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" />
                         <div>
                           <p className="text-xs font-bold text-slate-700 leading-tight">{date}</p>
-                          <p className="text-[10px] font-normal text-slate-550 mt-0.5">{time}</p>
+                          {time && <p className="text-[10px] font-normal text-slate-550 mt-0.5">{time}</p>}
                         </div>
                       </div>
                     </td>

@@ -32,6 +32,12 @@ export function NotesSection({ form }: NotesSectionProps) {
   const { register, setValue, watch } = form;
   const isNewClient = watch("is_new_client");
   const isUrgent = watch("is_urgent");
+  const selectedCustomer = watch("customer");
+  // Smart hint: existing customer with no prior orders
+  const hasNoPriorOrders = selectedCustomer
+    && typeof selectedCustomer === "object"
+    && "orders_count" in selectedCustomer
+    && (selectedCustomer as any).orders_count === 0;
   const internalNotes = watch("internal_notes") || "";
   const clientNotes = watch("client_notes") || "";
 
@@ -44,7 +50,7 @@ export function NotesSection({ form }: NotesSectionProps) {
   const paymentMethod = watch("payment_method") || "";
   const orderDate = watch("order_date");
 
-  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paymentAmount) - Number(paidAmount));
+  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paidAmount));
 
   const handleNewClientClick = () => {
     setValue("is_new_client", !isNewClient, { shouldDirty: true });
@@ -111,13 +117,19 @@ export function NotesSection({ form }: NotesSectionProps) {
                   <p className="text-xs font-extrabold text-slate-900 leading-tight">New Client</p>
                   {isNewClient && (
                     <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700 leading-none">
-                      Auto-detected
+                      First Order!
                     </span>
                   )}
                 </div>
                 <p className="text-[10px] text-slate-550 mt-0.5 leading-none font-semibold">
                   {isNewClient ? "Toggle off if not a new client" : "Mark as a new client"}
                 </p>
+                {/* Smart hint for existing customer with no prior orders */}
+                {!isNewClient && hasNoPriorOrders && (
+                  <p className="text-[9px] text-amber-600 font-bold mt-0.5 leading-none">
+                    ⚡ No previous orders found
+                  </p>
+                )}
               </div>
             </div>
           </button>
@@ -193,36 +205,51 @@ export function NotesSection({ form }: NotesSectionProps) {
         </div>
       </div>
 
-      {/* Right Panel: Order Summary & Details */}
+      {/* Right Panel: Order Summary */}
       <div className="w-80 shrink-0 border-l border-slate-100 pl-5 flex flex-col justify-center space-y-3.5">
         {/* Order Summary */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3.5">
-          <span className="text-xs font-bold text-slate-900 block">Order Summary</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-900">Order Summary</span>
+          </div>
 
           <div className="space-y-2.5 text-xs text-slate-700 font-semibold">
+            {/* Invoice Total */}
+            <div className="flex items-center justify-between">
+              <span>Invoice Total</span>
+              <span className="text-slate-900 font-bold">{formatCurrency(itemsTotal)}</span>
+            </div>
+            {/* Per Installment — only for Two Payments */}
             {paymentType === "two" && (
-              <div className="flex items-center justify-between">
-                <span>Items Total</span>
-                <span className="text-slate-900 font-bold">{formatCurrency(itemsTotal)}</span>
+              <div className="flex items-center justify-between text-slate-500">
+                <span className="text-[10px]">Per Installment</span>
+                <span className="text-slate-700 font-bold text-[10px]">{formatCurrency(paymentAmount)}</span>
               </div>
             )}
+            {/* Paid Amount */}
             <div className="flex items-center justify-between">
               <span>Paid Amount</span>
               <span className="text-slate-900 font-bold">{formatCurrency(paidAmount)}</span>
             </div>
-            <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5">
-              <span>Payment Type</span>
-              <span className="text-slate-900 font-extrabold uppercase text-[10px]">
-                {paymentType === "one" ? "One Payment" : paymentType === "two" ? "Two Payments" : "-"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Payment Amount</span>
-              <span className="text-slate-900 font-bold">{formatCurrency(paymentAmount)}</span>
-            </div>
+            {/* Balance Due */}
             <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5 text-violet-750">
               <span>Balance Due</span>
               <span className="text-violet-700 font-extrabold text-sm">{formatCurrency(balanceDue)}</span>
+            </div>
+            {/* Divider: Payment Type & Method */}
+            <div className="border-t border-slate-200/60 pt-2.5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span>Payment Type</span>
+                <span className="text-slate-900 font-extrabold uppercase text-[10px]">
+                  {paymentType === "one" ? "One Payment" : paymentType === "two" ? "Two Payments" : "-"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Payment Method</span>
+                <span className="text-slate-900 font-extrabold uppercase text-[10px]">
+                  {paymentMethod ? methodLabels[paymentMethod as keyof typeof methodLabels] : "-"}
+                </span>
+              </div>
             </div>
           </div>
         </div>

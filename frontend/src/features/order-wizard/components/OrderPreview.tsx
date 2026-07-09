@@ -42,7 +42,10 @@ function PreviewRow({
 
 export function OrderPreview({ form }: OrderPreviewProps) {
   const v = form.getValues();
-  const remaining = Math.max(0, (v.items_total ? Number(v.items_total) : 0) - (v.payment_amount ? Number(v.payment_amount) : 0) - (v.paid_amount ? Number(v.paid_amount) : 0));
+  const computedItemsTotal = v.payment_type === "two"
+    ? Number(v.payment_amount || 0) * 2
+    : Number(v.payment_amount || 0);
+  const remaining = Math.max(0, computedItemsTotal - Number(v.paid_amount || 0));
 
   const formatCurrency = (val: string | number | undefined | null) => {
     if (val === undefined || val === null || val === "") return "0 AWG";
@@ -126,49 +129,53 @@ export function OrderPreview({ form }: OrderPreviewProps) {
         </div>
       </div>
 
-      {/* Right Panel: Payment Summary */}
+      {/* Right Panel: Order Summary */}
       <div className="w-80 shrink-0 border-l border-slate-100 pl-4 flex flex-col justify-start space-y-3 lg:mt-[44px]">
         <div className="rounded-xl border border-slate-200 bg-violet-50/10 p-3.5 space-y-2.5">
           <div className="flex items-center gap-2">
             <FileCheck2 className="h-4.5 w-4.5 text-violet-650" />
-            <span className="text-xs font-bold text-slate-900">Payment Details</span>
+            <span className="text-xs font-bold text-slate-900">Order Summary</span>
           </div>
 
           <div className="space-y-2 text-xs text-slate-750 font-bold">
+            {/* Invoice Total */}
             <div className="flex items-center justify-between">
-              <span>Payment Type</span>
-              <span className="text-slate-950 font-black">
-                {v.payment_type ? paymentTypeLabel(v.payment_type) : "-"}
-              </span>
+              <span>Invoice Total</span>
+              <span className="text-slate-950 font-black">{formatCurrency(computedItemsTotal)}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Payment Method</span>
-              <span className="text-slate-950 font-black">
-                {v.payment_method ? paymentMethodLabel(v.payment_method) : "-"}
-              </span>
-            </div>
+            {/* Per Installment — only for Two Payments */}
             {v.payment_type === "two" && (
-              <div className="flex items-center justify-between">
-                <span>Items Total</span>
-                <span className="text-slate-950 font-black">{formatCurrency(v.items_total)}</span>
+              <div className="flex items-center justify-between text-slate-500">
+                <span className="text-[10px]">Per Installment</span>
+                <span className="text-slate-700 font-bold text-[10px]">{formatCurrency(v.payment_amount)}</span>
               </div>
             )}
+            {/* Paid Amount */}
             {Number(v.paid_amount) > 0 && (
               <div className="flex items-center justify-between">
                 <span>Paid Amount</span>
                 <span className="text-slate-950 font-black">{formatCurrency(v.paid_amount)}</span>
               </div>
             )}
-            {remaining > 0 && (
+            {/* Balance Due */}
+            <div className="flex items-center justify-between border-t border-slate-200/80 pt-2 text-violet-650">
+              <span>Balance Due</span>
+              <span className="text-sm font-extrabold">{formatCurrency(remaining)}</span>
+            </div>
+            {/* Divider: Payment Type & Method */}
+            <div className="border-t border-slate-200/80 pt-2 space-y-2">
               <div className="flex items-center justify-between">
-                <span>Remaining Balance</span>
-                <span className="text-slate-950 font-black">{formatCurrency(remaining)}</span>
+                <span>Payment Type</span>
+                <span className="text-slate-950 font-black">
+                  {v.payment_type ? paymentTypeLabel(v.payment_type) : "-"}
+                </span>
               </div>
-            )}
-            <div className="border-t border-slate-200/80 my-1.5" />
-            <div className="flex items-center justify-between text-violet-650 font-bold">
-              <span>Payment Amount</span>
-              <span className="text-sm font-extrabold">{formatCurrency(v.payment_amount)}</span>
+              <div className="flex items-center justify-between">
+                <span>Payment Method</span>
+                <span className="text-slate-950 font-black">
+                  {v.payment_method ? paymentMethodLabel(v.payment_method) : "-"}
+                </span>
+              </div>
             </div>
           </div>
         </div>

@@ -21,8 +21,8 @@ class OrderService:
     @staticmethod
     def create_order(*, user, validated_data: dict) -> Order:
         customer = Customer.objects.get(pk=validated_data["customer_id"])
-        total_paid = validated_data["paid_amount"] + validated_data["payment_amount"]
-        remaining_balance = validated_data["items_total"] - total_paid
+        paid_amount = validated_data["paid_amount"]
+        remaining_balance = validated_data["items_total"] - paid_amount
 
         with transaction.atomic():
             order = Order.objects.create(
@@ -36,7 +36,7 @@ class OrderService:
                 payment_type=validated_data["payment_type"],
                 payment_amount=validated_data["payment_amount"],
                 items_total=validated_data["items_total"],
-                paid_amount=total_paid,
+                paid_amount=paid_amount,
                 remaining_balance=remaining_balance,
                 payment_method=validated_data["payment_method"],
                 is_new_client=validated_data.get("is_new_client", False),
@@ -50,7 +50,7 @@ class OrderService:
             payment = Payment.objects.create(
                 order=order,
                 sequence=1,
-                amount=validated_data["payment_amount"],
+                amount=validated_data["paid_amount"],  # actual amount customer paid now
                 payment_method=order.payment_method,
                 payment_type=order.payment_type,
                 recorded_by=user,

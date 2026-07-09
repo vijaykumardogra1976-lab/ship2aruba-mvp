@@ -340,11 +340,6 @@ export function OrdersViewerPage() {
                 <h1 className="text-2xl font-black tracking-tight text-slate-800">
                   Orders
                 </h1>
-                {!isLoading && (
-                  <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-black text-violet-700">
-                    {tabCounts.all}
-                  </span>
-                )}
               </div>
               <p className="mt-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Track and manage all customer orders in one place.

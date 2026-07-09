@@ -21,15 +21,18 @@ export function useWizardPersistence(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
-  // On tab/window close: CLEAR the draft so stale data never persists
-  // across browser sessions. This is intentional — order forms should
-  // not survive a full page close.
+  // On tab/window close OR navigation away: CLEAR the draft
+  // so stale data never persists when user leaves the Create Order page.
   useEffect(() => {
     const handler = () => {
       localStorage.removeItem(WIZARD_STORAGE_KEY);
     };
     window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
+    // Return cleanup: fires on component unmount (navigation away)
+    return () => {
+      window.removeEventListener("beforeunload", handler);
+      localStorage.removeItem(WIZARD_STORAGE_KEY);
+    };
   }, []);
 
   // Save draft to localStorage only when form has been touched (isDirty)
