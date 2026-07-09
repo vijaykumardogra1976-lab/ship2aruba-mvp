@@ -77,7 +77,8 @@ export function OrdersTable({
     mutationFn: ({ orderId, payload }: { orderId: number; payload: Partial<Record<OrderStatusField, boolean>> }) =>
       updateOrderStatus(orderId, payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["orders", "list"] });
+      // Invalidate all order queries (["orders"] prefix matches all variants with filter params)
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
 
@@ -86,7 +87,7 @@ export function OrdersTable({
     if (order.is_in_myus) return "in_myus";
     if (order.is_uploaded) return "uploaded";
     if (order.is_az_ordered) return "az_ordered";
-    return "pending";
+    return "az_ordered"; // Default to az_ordered if none are set
   };
 
   const getStatusBadge = (statusVal: string) => {
@@ -102,7 +103,7 @@ export function OrdersTable({
     if (statusVal === "az_ordered") {
       return { label: "AZ Ordered", classes: "bg-violet-50 text-violet-700 border-violet-100" };
     }
-    return { label: "Pending", classes: "bg-amber-50 text-amber-700 border-amber-100" };
+    return { label: "AZ Ordered", classes: "bg-violet-50 text-violet-700 border-violet-100" };
   };
 
   const handleStatusChange = (orderId: number, statusVal: string) => {
@@ -269,8 +270,7 @@ export function OrdersTable({
                             currentStatus === "completed" && "bg-emerald-50 text-emerald-700 border-emerald-100",
                             currentStatus === "in_myus" && "bg-blue-50 text-blue-700 border-blue-100",
                             currentStatus === "uploaded" && "bg-teal-50 text-teal-700 border-teal-100",
-                            currentStatus === "az_ordered" && "bg-violet-50 text-violet-700 border-violet-100",
-                            currentStatus === "pending" && "bg-amber-50 text-amber-700 border-amber-100"
+                            currentStatus === "az_ordered" && "bg-violet-50 text-violet-700 border-violet-100"
                           )}
                         >
                           <span>{statusInfo.label}</span>
@@ -282,7 +282,6 @@ export function OrdersTable({
                             <div className="fixed inset-0 z-40" onClick={() => setOpenStatusOrderId(null)} />
                             <div className="absolute left-0 mt-1 w-32 rounded-xl border border-slate-100 bg-white p-1 shadow-lg z-50 text-left">
                               {[
-                                { val: "pending", label: "Pending", classes: "hover:bg-amber-50 hover:text-amber-700" },
                                 { val: "az_ordered", label: "AZ Ordered", classes: "hover:bg-violet-50 hover:text-violet-700" },
                                 { val: "uploaded", label: "Uploaded", classes: "hover:bg-teal-50 hover:text-teal-700" },
                                 { val: "in_myus", label: "In MyUS", classes: "hover:bg-blue-50 hover:text-blue-700" },

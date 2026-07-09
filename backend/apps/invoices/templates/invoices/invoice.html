@@ -108,8 +108,8 @@
           <div class="item-sub">{{ number_of_items }} item(s) · Shipped to Aruba</div>
         </td>
         <td class="text-center">1</td>
-        <td class="text-right">{{ items_total }} AWG</td>
-        <td class="text-right">{{ items_total }} AWG</td>
+        <td class="text-right">{{ items_total|floatformat:0 }} AWG</td>
+        <td class="text-right">{{ items_total|floatformat:0 }} AWG</td>
       </tr>
     </tbody>
   </table>
@@ -119,21 +119,21 @@
     <table class="totals-table">
       <tr class="totals-row">
         <td class="totals-label" style="font-weight: bold; color: #1a1a1a; font-size: 14px; text-transform: uppercase;">TOTAL</td>
-        <td class="totals-val" style="font-weight: bold; color: #1a1a1a; font-size: 14px;">{{ total }} AWG</td>
+        <td class="totals-val" style="font-weight: bold; color: #1a1a1a; font-size: 14px;">{{ total|floatformat:0 }} AWG</td>
       </tr>
       {% for p in payments %}
       <tr class="totals-row">
         <td class="totals-label" style="color: #555555; font-size: 13px;">
           Payment on {{ p.paid_at|date:"d F Y" }} using {{ p.payment_method }}
         </td>
-        <td class="totals-val" style="color: #333333; font-size: 13px;">{{ p.amount }} AWG</td>
+        <td class="totals-val" style="color: #333333; font-size: 13px;">{{ p.amount|floatformat:0 }} AWG</td>
       </tr>
       {% empty %}
       <tr class="totals-row">
         <td class="totals-label" style="color: #555555; font-size: 13px;">
           Payment using {{ payment_method }}
         </td>
-        <td class="totals-val" style="color: #333333; font-size: 13px;">{{ paid }} AWG</td>
+        <td class="totals-val" style="color: #333333; font-size: 13px;">{{ paid|floatformat:0 }} AWG</td>
       </tr>
       {% endfor %}
     </table>
@@ -141,7 +141,7 @@
     <table class="totals-table">
       <tr class="totals-row">
         <td class="totals-label totals-due-label" style="text-transform: uppercase;">AMOUNT DUE</td>
-        <td class="totals-val totals-due-val">{{ remaining_balance }} AWG</td>
+        <td class="totals-val totals-due-val">{{ remaining_balance|floatformat:0 }} AWG</td>
       </tr>
     </table>
   </div>

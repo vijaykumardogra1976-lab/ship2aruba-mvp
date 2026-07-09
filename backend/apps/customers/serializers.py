@@ -6,10 +6,19 @@ CUSTOMER_NAME_MAX_LENGTH = 20
 
 
 class CustomerSerializer(serializers.ModelSerializer):
+    orders_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Customer
-        fields = ("id", "name", "phone", "email", "created_at")
-        read_only_fields = ("id", "created_at")
+        fields = ("id", "name", "phone", "email", "created_at", "orders_count")
+        read_only_fields = ("id", "created_at", "orders_count")
+
+    def get_orders_count(self, obj):
+        annotated_count = getattr(obj, "orders_count", None)
+        if annotated_count is not None:
+            return annotated_count
+        return obj.orders.count()
+
 
 
 class CustomerCreateSerializer(serializers.ModelSerializer):

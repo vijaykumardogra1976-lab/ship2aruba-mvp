@@ -7,6 +7,7 @@ export function useWizardPersistence(
   form: UseFormReturn<OrderFormData>,
   isDirty: boolean,
 ) {
+  // On mount: restore saved draft from localStorage (only if it exists)
   useEffect(() => {
     const saved = localStorage.getItem(WIZARD_STORAGE_KEY);
     if (saved) {
@@ -17,26 +18,35 @@ export function useWizardPersistence(
         localStorage.removeItem(WIZARD_STORAGE_KEY);
       }
     }
-  }, [form]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
+  // On tab/window close: CLEAR the draft so stale data never persists
+  // across browser sessions. This is intentional — order forms should
+  // not survive a full page close.
   useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
+    const handler = () => {
+      localStorage.removeItem(WIZARD_STORAGE_KEY);
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [isDirty]);
-
-  const save = useCallback((data: OrderFormData) => {
-    localStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify(data));
   }, []);
 
+  // Save draft to localStorage only when form has been touched (isDirty)
+  const save = useCallback(
+    (data: OrderFormData) => {
+      if (isDirty) {
+        localStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify(data));
+      }
+    },
+    [isDirty],
+  );
+
+  // Clear draft on successful submission
   const clear = useCallback(() => {
     localStorage.removeItem(WIZARD_STORAGE_KEY);
   }, []);
 
   return { save, clear };
 }
+

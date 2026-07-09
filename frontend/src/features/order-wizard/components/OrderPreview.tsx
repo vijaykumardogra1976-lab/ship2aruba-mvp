@@ -45,9 +45,9 @@ export function OrderPreview({ form }: OrderPreviewProps) {
   const remaining = Math.max(0, (v.items_total ? Number(v.items_total) : 0) - (v.payment_amount ? Number(v.payment_amount) : 0) - (v.paid_amount ? Number(v.paid_amount) : 0));
 
   const formatCurrency = (val: string | number | undefined | null) => {
-    if (val === undefined || val === null || val === "") return "0.00 AWG";
+    if (val === undefined || val === null || val === "") return "0 AWG";
     const num = Number(val);
-    return Number.isNaN(num) ? "0.00 AWG" : `${num.toFixed(2)} AWG`;
+    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -90,7 +90,7 @@ export function OrderPreview({ form }: OrderPreviewProps) {
           <PreviewRow
             icon={DollarSign}
             label="Amount in USD"
-            value={v.amount_usd !== "" ? `${Number(v.amount_usd).toFixed(2)} AWG` : "-"}
+            value={v.amount_usd !== "" ? `${Math.round(Number(v.amount_usd))}` : "-"}
           />
         </div>
 
@@ -147,10 +147,12 @@ export function OrderPreview({ form }: OrderPreviewProps) {
                 {v.payment_method ? paymentMethodLabel(v.payment_method) : "-"}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Items Total</span>
-              <span className="text-slate-950 font-black">{formatCurrency(v.items_total)}</span>
-            </div>
+            {v.payment_type === "two" && (
+              <div className="flex items-center justify-between">
+                <span>Items Total</span>
+                <span className="text-slate-950 font-black">{formatCurrency(v.items_total)}</span>
+              </div>
+            )}
             {Number(v.paid_amount) > 0 && (
               <div className="flex items-center justify-between">
                 <span>Paid Amount</span>

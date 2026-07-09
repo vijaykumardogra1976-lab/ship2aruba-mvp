@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/config/queryKeys";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,10 +41,14 @@ export function CreateCustomerModal({
     defaultValues: { name: "", phone: "", email: "" },
   });
 
+  const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: createCustomer,
     onSuccess: (customer) => {
       reset();
+      // Invalidate customers list so recent customers updates immediately
+      void queryClient.invalidateQueries({ queryKey: queryKeys.customers.list });
       onCreated(customer);
     },
   });

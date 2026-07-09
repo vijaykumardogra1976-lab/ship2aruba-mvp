@@ -59,7 +59,8 @@ export function OrderStatusToggles({ order }: OrderStatusTogglesProps) {
     mutationFn: (payload: Partial<Record<OrderStatusField, boolean>>) =>
       updateOrderStatus(order.id, payload),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["orders", "list"] });
+      // Invalidate all order queries (["orders"] prefix matches all variants with filter params)
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
 

@@ -4,6 +4,7 @@ export interface Customer {
   phone: string;
   email: string | null;
   created_at?: string;
+  orders_count?: number;
 }
 
 export interface CreateCustomerPayload {

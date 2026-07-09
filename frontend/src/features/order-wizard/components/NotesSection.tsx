@@ -55,9 +55,9 @@ export function NotesSection({ form }: NotesSectionProps) {
   };
 
   const formatCurrency = (val: string | number | undefined | null) => {
-    if (val === undefined || val === null || val === "") return "0.00 AWG";
+    if (val === undefined || val === null || val === "") return "0 AWG";
     const num = Number(val);
-    return Number.isNaN(num) ? "0.00 AWG" : `${num.toFixed(2)} AWG`;
+    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -200,13 +200,15 @@ export function NotesSection({ form }: NotesSectionProps) {
           <span className="text-xs font-bold text-slate-900 block">Order Summary</span>
 
           <div className="space-y-2.5 text-xs text-slate-700 font-semibold">
-            <div className="flex items-center justify-between">
-              <span>Items Total</span>
-              <span className="text-slate-900 font-bold">AWG {formatCurrency(itemsTotal)}</span>
-            </div>
+            {paymentType === "two" && (
+              <div className="flex items-center justify-between">
+                <span>Items Total</span>
+                <span className="text-slate-900 font-bold">{formatCurrency(itemsTotal)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <span>Paid Amount</span>
-              <span className="text-slate-900 font-bold">AWG {formatCurrency(paidAmount)}</span>
+              <span className="text-slate-900 font-bold">{formatCurrency(paidAmount)}</span>
             </div>
             <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5">
               <span>Payment Type</span>
@@ -216,11 +218,11 @@ export function NotesSection({ form }: NotesSectionProps) {
             </div>
             <div className="flex items-center justify-between">
               <span>Payment Amount</span>
-              <span className="text-slate-900 font-bold">AWG {formatCurrency(paymentAmount)}</span>
+              <span className="text-slate-900 font-bold">{formatCurrency(paymentAmount)}</span>
             </div>
             <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5 text-violet-750">
               <span>Balance Due</span>
-              <span className="text-violet-700 font-extrabold text-sm">AWG {formatCurrency(balanceDue)}</span>
+              <span className="text-violet-700 font-extrabold text-sm">{formatCurrency(balanceDue)}</span>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, Count
 from rest_framework import generics
 from rest_framework.response import Response
 
@@ -16,7 +16,7 @@ class CustomerListCreateView(generics.ListCreateAPIView):
         return CustomerSerializer
 
     def get_queryset(self):
-        queryset = Customer.objects.all()
+        queryset = Customer.objects.annotate(orders_count=Count("orders"))
         search = self.request.query_params.get("search", "").strip()
         if search:
             queryset = queryset.filter(

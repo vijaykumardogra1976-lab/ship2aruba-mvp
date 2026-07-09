@@ -220,35 +220,52 @@ export function OrderDetailsPanel({
             <span className="text-[10px] font-semibold uppercase text-slate-600">Order Total</span>
             <span className="font-black text-slate-800">{formatCurrencyInt(order.items_total)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Paid Amount</span>
-            <span className="font-bold text-emerald-600">{formatCurrencyInt(order.paid_amount)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Balance</span>
-            <span className={cn("font-black", balanceVal > 0 ? "text-rose-500" : "text-emerald-600")}>
-              {formatCurrencyInt(order.remaining_balance)}
-            </span>
-          </div>
+
           <div className="h-px bg-slate-50 my-1" />
+
           <div className="flex justify-between">
             <span className="text-[10px] font-semibold uppercase text-slate-600">Payment Type</span>
+            <span className="font-bold text-slate-700">{order.payment_type_display || order.payment_type}</span>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-[10px] font-semibold uppercase text-slate-600">Payment Method</span>
             <span className="font-bold text-slate-700">By {order.payment_method_display || order.payment_method}</span>
           </div>
-          {parseFloat(order.payment_amount) > 0 && (
+
+          {order.payment_type === "two" && parseFloat(order.payment_amount) > 0 && (
             <div className="flex justify-between">
               <span className="text-[10px] font-semibold uppercase text-slate-600">Installment Amount</span>
               <span className="font-bold text-slate-700">{formatCurrencyInt(order.payment_amount)}</span>
             </div>
           )}
-          <div className="pt-1">
-            <button
-              onClick={onAddPayment}
-              className="text-[9px] font-black text-violet-650 hover:text-violet-750 transition-colors uppercase tracking-wider cursor-pointer"
-            >
-              View Payments History
-            </button>
+
+          <div className="h-px bg-slate-50 my-1" />
+
+          <div className="flex justify-between">
+            <span className="text-[10px] font-semibold uppercase text-slate-600">Amount Paid</span>
+            <span className="font-bold text-emerald-600">{formatCurrencyInt(order.paid_amount)}</span>
           </div>
+
+          {(order.payment_type === "two" || balanceVal > 0) && (
+            <div className="flex justify-between">
+              <span className="text-[10px] font-semibold uppercase text-slate-600">Amount Due</span>
+              <span className={cn("font-black", balanceVal > 0 ? "text-rose-500" : "text-emerald-600")}>
+                {formatCurrencyInt(order.remaining_balance)}
+              </span>
+            </div>
+          )}
+
+          {order.payment_type === "two" && (
+            <div className="pt-1.5 border-t border-slate-50 mt-1">
+              <button
+                onClick={onAddPayment}
+                className="text-[9px] font-black text-violet-650 hover:text-violet-750 transition-colors uppercase tracking-wider cursor-pointer"
+              >
+                Add New Payment
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

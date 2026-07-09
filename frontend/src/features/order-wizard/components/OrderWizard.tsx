@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -9,6 +9,7 @@ import { CustomerSearch } from "@/features/customers/components/CustomerSearch";
 import { createCustomer } from "@/features/customers/api/customersApi";
 import type { Customer } from "@/features/customers/types";
 import { createOrder, getInvoice, uploadOrderPdf } from "../api/orderApi";
+import { queryKeys } from "@/config/queryKeys";
 import { useOrderWizard } from "../hooks/useOrderWizard";
 import { useWizardPersistence } from "../hooks/useWizardPersistence";
 import { orderSchema } from "../schema/orderSchema";
@@ -50,6 +51,7 @@ export function OrderWizard() {
     mode: "onChange",
   });
 
+  const queryClient = useQueryClient();
   const { step, goNext, goPrev, goToStep, resetWizard, validateStep } = useOrderWizard(form);
   const { save, clear } = useWizardPersistence(form, form.formState.isDirty);
 
@@ -88,14 +90,26 @@ export function OrderWizard() {
       form.reset(defaultValues);
       setSelectedPdf(null);
       setSuccessOpen(true);
+      // Invalidate all orders queries so the orders list auto-refreshes with the new order
+      void queryClient.invalidateQueries({ queryKey: ["orders"] });
+      // Invalidate customers list (a new customer may have been created inline)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.customers.list });
     },
   });
 
-  const handleSelectCustomer = (c: Customer) => {
+  const handleSelectCustomer = (c: Customer | null) => {
     form.setValue("customer", c, { shouldValidate: true, shouldDirty: true });
     form.setValue("new_customer_name", "");
     form.setValue("new_customer_phone", "");
     form.setValue("new_customer_email", "");
+    
+    // Auto-select "New Client" if the customer has zero order history
+    if (c) {
+      const isNew = c.orders_count === 0 || c.orders_count === undefined;
+      form.setValue("is_new_client", isNew, { shouldDirty: true });
+    } else {
+      form.setValue("is_new_client", false, { shouldDirty: true });
+    }
   };
 
   const handleSubmit = async () => {
@@ -144,8 +158,8 @@ export function OrderWizard() {
         if (!newName) {
           form.setError("new_customer_name", { message: "Full Name is required." });
           hasError = true;
-        } else if (!/^[a-zA-Z\s'-]+$/.test(newName)) {
-          form.setError("new_customer_name", { message: "Only letters, spaces, hyphens, and apostrophes are allowed." });
+        } else if (!/^[a-zA-Z'-]+(\s[a-zA-Z'-]+)*$/.test(newName)) {
+          form.setError("new_customer_name", { message: "Only letters, single spaces, hyphens, and apostrophes are allowed." });
           hasError = true;
         }
 
@@ -153,20 +167,23 @@ export function OrderWizard() {
         if (!newEmail) {
           form.setError("new_customer_email", { message: "Email is required." });
           hasError = true;
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
-          form.setError("new_customer_email", { message: "Invalid email format (e.g. name@domain.com)." });
+        } else if (!/^[a-zA-Z0-9.]+@[a-zA-Z0-9.]+\.[a-zA-Z]{2,}$/.test(newEmail)) {
+          form.setError("new_customer_email", { message: "Invalid email format (no special signs like +, - allowed)." });
           hasError = true;
         }
+
+        const isAruba = phoneCode === "+297";
+        const isValidLength = isAruba ? newPhone.length === 7 : (newPhone.length === 9 || newPhone.length === 10);
 
         // 3. Validate Phone Number
         if (!newPhone) {
           form.setError("new_customer_phone", { message: "Phone number is required." });
           hasError = true;
-        } else if (!/^[0-9\s-]+$/.test(newPhone)) {
-          form.setError("new_customer_phone", { message: "Only digits, spaces, and hyphens are allowed." });
-          hasError = true;
-        } else if (newPhone.replace(/[\s-]/g, "").length < 5) {
-          form.setError("new_customer_phone", { message: "Phone number must be at least 5 digits." });
+        } else if (!isValidLength) {
+          const msg = isAruba 
+            ? "Aruba phone number must be exactly 7 digits." 
+            : "Netherlands phone number must be 9 or 10 digits.";
+          form.setError("new_customer_phone", { message: msg });
           hasError = true;
         }
 
@@ -224,27 +241,27 @@ export function OrderWizard() {
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-slate-50 overflow-y-auto">
       {/* Header section (above Card) */}
-      <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-6 py-2 flex items-center justify-between">
+      <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-6 py-4 flex items-center justify-between">
         <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">
           Place New Order
         </h1>
 
         {/* Selected Customer Banner (For Step > 1) */}
         {step > 1 && customer && (
-          <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1 shadow-xs">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white shadow-xs">
+          <div className="flex items-center gap-3.5 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-xs">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white shadow-xs">
               {customer.name.trim().split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold text-slate-800 leading-tight">{customer.name}</p>
-              <p className="text-[9px] text-slate-500 font-bold leading-none mt-0.5">{customer.phone}</p>
+              <p className="text-sm font-bold text-slate-800 leading-tight">{customer.name}</p>
+              <p className="text-xs text-slate-500 font-semibold leading-none mt-1">{customer.phone}</p>
             </div>
             <button
               type="button"
               onClick={() => goToStep(1)}
-              className="ml-1.5 inline-flex h-6 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[9px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shadow-xs"
+              className="ml-2 inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shadow-xs"
             >
-              <Pencil className="h-3 w-3" />
+              <Pencil className="h-3.5 w-3.5" />
               Change Customer
             </button>
           </div>

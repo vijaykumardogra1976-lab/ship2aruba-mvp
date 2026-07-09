@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Download, FileText, Printer } from "lucide-react";
+import { Plus, Download, FileText, Printer, ChevronDown } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { queryKeys } from "@/config/queryKeys";
@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function OrdersViewerPage() {
   const navigate = useNavigate();
@@ -48,7 +49,8 @@ export function OrdersViewerPage() {
   const [receiptOpen, setReceiptOpen] = useState(false);
 
   // Status Filter Tab
-  const [activeTab, setActiveTab] = useState<"all" | "paid" | "pending" | "uploaded" | "az_ordered">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "paid" | "pending" | "uploaded" | "az_ordered" | "in_myus" | "completed">("all");
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
   const debouncedSearch = useDebouncedValue(filters.search.trim());
 
@@ -77,8 +79,15 @@ export function OrdersViewerPage() {
       const balance = parseFloat(order.remaining_balance);
       if (activeTab === "paid") return balance <= 0;
       if (activeTab === "pending") return balance > 0;
-      if (activeTab === "uploaded") return order.is_uploaded;
-      if (activeTab === "az_ordered") return order.is_az_ordered;
+      const isCompleted = order.is_completed;
+      const isInMyUs = order.is_in_myus && !isCompleted;
+      const isUploaded = order.is_uploaded && !order.is_in_myus && !isCompleted;
+      const isAzOrdered = !order.is_uploaded && !order.is_in_myus && !isCompleted;
+
+      if (activeTab === "completed") return isCompleted;
+      if (activeTab === "in_myus") return isInMyUs;
+      if (activeTab === "uploaded") return isUploaded;
+      if (activeTab === "az_ordered") return isAzOrdered;
       return true;
     });
   }, [filteredOrdersBase, activeTab]);
@@ -113,8 +122,10 @@ export function OrdersViewerPage() {
       all: filteredOrdersBase.length,
       paid: filteredOrdersBase.filter(o => parseFloat(o.remaining_balance) <= 0).length,
       pending: filteredOrdersBase.filter(o => parseFloat(o.remaining_balance) > 0).length,
-      uploaded: filteredOrdersBase.filter(o => o.is_uploaded).length,
-      az_ordered: filteredOrdersBase.filter(o => o.is_az_ordered).length,
+      completed: filteredOrdersBase.filter(o => o.is_completed).length,
+      in_myus: filteredOrdersBase.filter(o => o.is_in_myus && !o.is_completed).length,
+      uploaded: filteredOrdersBase.filter(o => o.is_uploaded && !o.is_in_myus && !o.is_completed).length,
+      az_ordered: filteredOrdersBase.filter(o => !o.is_uploaded && !o.is_in_myus && !o.is_completed).length,
     };
   }, [filteredOrdersBase]);
 
@@ -287,7 +298,7 @@ export function OrdersViewerPage() {
       o.items_total,
       o.paid_amount,
       o.remaining_balance,
-      o.is_completed ? "Delivered" : o.is_in_myus ? "In MyUS" : o.is_uploaded ? "Uploaded" : o.is_az_ordered ? "AZ Ordered" : "Pending"
+      o.is_completed ? "Delivered" : o.is_in_myus ? "In MyUS" : o.is_uploaded ? "Uploaded" : "AZ Ordered"
     ]);
     const csvContent = "data:text/csv;charset=utf-8," 
       + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
@@ -353,12 +364,82 @@ export function OrdersViewerPage() {
             filters={filters}
             onChange={handleFilterChange}
             onReset={handleReset}
-          />
+          >
+            {/* Status Filter Dropdown */}
+            <div className="relative inline-block z-10 shrink-0">
+              <button
+                type="button"
+                onClick={() => setFilterMenuOpen(!filterMenuOpen)}
+                className="flex h-11 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-slate-350 focus:border-violet-500 shadow-[0_2px_8px_rgba(0,0,0,0.01)] min-w-[200px] cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="uppercase tracking-wider">
+                    {
+                      [
+                        { id: "all", label: "All Orders", count: tabCounts.all },
+                        { id: "paid", label: "Paid", count: tabCounts.paid },
+                        { id: "pending", label: "Unpaid", count: tabCounts.pending },
+                        { id: "uploaded", label: "Uploaded", count: tabCounts.uploaded },
+                        { id: "az_ordered", label: "AZ Ordered", count: tabCounts.az_ordered },
+                        { id: "in_myus", label: "In MyUS", count: tabCounts.in_myus },
+                        { id: "completed", label: "Delivered", count: tabCounts.completed },
+                      ].find((t) => t.id === activeTab)?.label || "All Orders"
+                    } 
+                  </span>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", filterMenuOpen && "rotate-180")} />
+              </button>
+
+              {filterMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setFilterMenuOpen(false)} />
+                  <div className="absolute left-0 top-full mt-2 w-full rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg shadow-slate-200/50 z-50 flex flex-col gap-0.5">
+                    {[
+                      { id: "all", label: "All Orders", count: tabCounts.all },
+                      { id: "paid", label: "Paid", count: tabCounts.paid },
+                      { id: "pending", label: "Unpaid", count: tabCounts.pending },
+                      { id: "uploaded", label: "Uploaded", count: tabCounts.uploaded },
+                      { id: "az_ordered", label: "AZ Ordered", count: tabCounts.az_ordered },
+                      { id: "in_myus", label: "In MyUS", count: tabCounts.in_myus },
+                      { id: "completed", label: "Delivered", count: tabCounts.completed },
+                    ].map((tab) => {
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(tab.id as any);
+                            setPage(1);
+                            setFilterMenuOpen(false);
+                          }}
+                          className={cn(
+                            "flex w-full items-center justify-between px-3 py-2.5 text-xs font-bold rounded-lg transition-colors cursor-pointer text-left uppercase tracking-wider",
+                            isActive
+                              ? "bg-violet-50 text-violet-700"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                          )}
+                        >
+                          <span>{tab.label}</span>
+                          <span className={cn(
+                            "rounded-full px-2 py-0.5 text-[9px] font-black",
+                            isActive ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500"
+                          )}>
+                            {tab.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          </OrdersFilters>
 
           {isError && (
             <div
               role="alert"
-              className="rounded-2xl border border-red-150 bg-red-50/50 px-4 py-3.5 text-xs font-semibold text-red-800"
+              className="rounded-2xl border border-red-150 bg-red-50/50 px-4 py-3.5 text-xs font-semibold text-red-800 mt-4"
             >
               Failed to load orders.{" "}
               <button
@@ -370,37 +451,6 @@ export function OrdersViewerPage() {
               </button>
             </div>
           )}
-
-          {/* Status Tab Navigation */}
-          <div className="border-b border-slate-200">
-            <nav className="flex space-x-6" aria-label="Tabs">
-              {[
-                { id: "all", label: "All Orders", count: tabCounts.all },
-                { id: "paid", label: "Paid", count: tabCounts.paid },
-                { id: "pending", label: "Pending", count: tabCounts.pending },
-                { id: "uploaded", label: "Uploaded", count: tabCounts.uploaded },
-                { id: "az_ordered", label: "AZ Ordered", count: tabCounts.az_ordered },
-              ].map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id as any);
-                      setPage(1);
-                    }}
-                    className={`py-3.5 px-1 border-b-2 font-bold text-xs transition-all uppercase tracking-wider cursor-pointer ${
-                      isActive
-                        ? "border-violet-600 text-violet-700 font-black"
-                        : "border-transparent text-slate-550 hover:text-slate-800 hover:border-slate-300"
-                    }`}
-                  >
-                    {tab.label} <span className={`ml-1 text-[10px] ${isActive ? 'text-violet-700 font-extrabold' : 'text-slate-500 font-semibold'}`}>({tab.count})</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
 
           {/* Split Screen Layout Container */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

@@ -1,4 +1,4 @@
-import { Box, Calendar, Check, ChevronDown, ShoppingCart, UploadCloud } from "lucide-react";
+import { Box, Calendar, Check, ShoppingCart, UploadCloud } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -132,7 +132,7 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
 
         {/* Text Input Grid */}
         <div className="grid gap-3 sm:grid-cols-2">
-          {/* Order's Website */}
+          {/* Order's Website — only show input for "Other"; Amazon/eBay set automatically from card */}
           {websiteType === "other" ? (
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="custom-website">
@@ -148,22 +148,26 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
                 <p className="text-[10px] text-red-500 font-semibold">{errors.website.message}</p>
               )}
             </div>
-          ) : (
-            <div className="space-y-1 relative">
-              <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="select-website">
+          ) : websiteType === "amazon" || websiteType === "ebay" ? (
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="selected-website">
                 Order's Website *
               </label>
-              <div className="relative">
-                <select
-                  id="select-website"
-                  value={watch("website")}
-                  onChange={(e) => setValue("website", e.target.value, { shouldValidate: true })}
-                  className="h-8.5 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden"
-                >
-                  <option value="Amazon">Amazon</option>
-                  <option value="eBay">eBay</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                id="selected-website"
+                value={watch("website")}
+                readOnly
+                disabled
+                className="h-8.5 text-xs border-slate-200 bg-slate-50 text-slate-800 font-bold cursor-not-allowed select-none"
+              />
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider">
+                Order's Website *
+              </label>
+              <div className="h-8.5 flex items-center rounded-lg border border-dashed border-slate-200 bg-slate-50/50 px-3">
+                <span className="text-xs text-slate-400 font-medium">Select a website above first</span>
               </div>
             </div>
           )}

@@ -82,7 +82,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
 
   const formatCurrency = (val: string | number) => {
     const num = Number(val);
-    return Number.isNaN(num) ? "0.00" : num.toFixed(2);
+    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
   };
 
   const getAlertText = () => {
@@ -167,9 +167,9 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
           )}
         </div>
 
-        {/* Text Input Grid */}
+        {/* Text Input Grid — fields shown depend on payment type */}
         <div className="grid gap-x-4 gap-y-3.5 sm:grid-cols-2">
-          {/* Payment Amount */}
+          {/* Payment Amount — always shown */}
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="payment_amount">
               Payment Amount (AWG) *
@@ -197,38 +197,41 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             )}
           </div>
 
-          {/* Items Total Amount */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="items_total">
-              Items Total Amount (AWG) *
-            </label>
-            <div className="relative">
-              <ShoppingBag className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <input
-                id="items_total"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="Enter items total amount"
-                {...register("items_total", {
-                  onChange: (event) => {
-                    handleItemsTotalChange(event.target.value);
-                  }
-                })}
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
-              />
+          {/* Items Total — only shown for Two Payments */}
+          {paymentType === "two" && (
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="items_total">
+                Items Total Amount (AWG) *
+              </label>
+              <div className="relative">
+                <ShoppingBag className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <input
+                  id="items_total"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Enter items total amount"
+                  {...register("items_total", {
+                    onChange: (event) => {
+                      handleItemsTotalChange(event.target.value);
+                    }
+                  })}
+                  className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
+                />
+              </div>
+              <p className="text-[10px] text-slate-500 font-bold leading-none pl-0.5">
+                Total value of all items
+              </p>
+              {errors.items_total && (
+                <p className="text-[10px] text-red-500 font-semibold">{errors.items_total.message}</p>
+              )}
             </div>
-            <p className="text-[10px] text-slate-500 font-bold leading-none pl-0.5">
-              Total value of all items
-            </p>
-            {errors.items_total && (
-              <p className="text-[10px] text-red-500 font-semibold">{errors.items_total.message}</p>
-            )}
-          </div>
+          )}
 
+          {/* Paid Amount — always shown, optional (no asterisk) */}
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="paid_amount">
-              Paid Amount (AWG) *
+              Paid Amount (AWG)
             </label>
             <div className="relative">
               <input
@@ -320,13 +323,19 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
           </div>
 
           <div className="space-y-2.5 text-xs text-slate-700 font-semibold">
+            {paymentType === "two" && (
+              <div className="flex items-center justify-between">
+                <span>Items Total</span>
+                <span className="text-slate-900 font-bold">{formatCurrency(itemsTotal)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
-              <span>Items Total</span>
-              <span className="text-slate-900 font-bold">AWG {formatCurrency(itemsTotal)}</span>
+              <span>Payment Amount</span>
+              <span className="text-slate-900 font-bold">{formatCurrency(paymentAmount)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span>Paid Amount</span>
-              <span className="text-slate-900 font-bold">AWG {formatCurrency(paidAmount)}</span>
+              <span className="text-slate-900 font-bold">{formatCurrency(paidAmount)}</span>
             </div>
             <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5">
               <span>Payment Type</span>
@@ -342,7 +351,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             </div>
             <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5 text-violet-750">
               <span>Balance Due</span>
-              <span className="text-violet-700 font-extrabold text-sm">AWG {formatCurrency(balanceDue)}</span>
+              <span className="text-violet-700 font-extrabold text-sm">{formatCurrency(balanceDue)}</span>
             </div>
           </div>
         </div>

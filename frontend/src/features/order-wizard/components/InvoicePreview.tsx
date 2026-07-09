@@ -13,6 +13,12 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
     return `${day} ${month} ,${year}`;
   };
 
+  const formatInt = (val: string | number | undefined | null) => {
+    if (val === undefined || val === null || val === "") return "0";
+    const num = Number(val);
+    return Number.isNaN(num) ? String(val).replace(/\.00$/, "") : Math.round(num).toString();
+  };
+
   const issuedDate = getFormattedDate(invoice.issued_at);
 
   return (
@@ -30,7 +36,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
               <p>Order # {invoice.order_number}</p>
               <p>Date of Invoice: {issuedDate}</p>
               <p>
-                <strong>Amount Due: {invoice.amount_due} AWG</strong>
+                <strong>Amount Due: {formatInt(invoice.amount_due)} AWG</strong>
               </p>
             </td>
           </tr>
@@ -75,8 +81,8 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             <tr key={item.label} className="border-b border-slate-100">
               <td className="py-1">{item.label}</td>
               <td className="py-1 text-center">{item.quantity}</td>
-              <td className="py-1 text-right">{item.price}</td>
-              <td className="py-1 text-right">{item.amount}</td>
+              <td className="py-1 text-right">{formatInt(item.price)}</td>
+              <td className="py-1 text-right">{formatInt(item.amount)}</td>
             </tr>
           ))}
         </tbody>
@@ -85,7 +91,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
       <div className="w-full space-y-1 text-xs mt-3">
         <div className="flex justify-between font-bold">
           <span>TOTAL:</span>
-          <span>{invoice.total} AWG</span>
+          <span>{formatInt(invoice.total)} AWG</span>
         </div>
         {invoice.payments && invoice.payments.length > 0 ? (
           invoice.payments.map((p) => {
@@ -95,7 +101,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
                 <span>
                   Payment on {pDate} using {p.payment_method}
                 </span>
-                <span>{p.amount} AWG</span>
+                <span>{formatInt(p.amount)} AWG</span>
               </div>
             );
           })
@@ -104,13 +110,13 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             <span>
               Payment using {invoice.payment_method}
             </span>
-            <span>{invoice.paid} AWG</span>
+            <span>{formatInt(invoice.paid)} AWG</span>
           </div>
         )}
         <div className="border-t border-slate-200 mt-1 pt-1">
           <div className="flex justify-between font-bold text-slate-900">
             <span>AMOUNT DUE:</span>
-            <span>{invoice.remaining_balance} AWG</span>
+            <span>{formatInt(invoice.remaining_balance)} AWG</span>
           </div>
         </div>
       </div>

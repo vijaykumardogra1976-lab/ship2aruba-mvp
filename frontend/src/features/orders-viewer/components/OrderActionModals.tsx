@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { CheckCircle2, Loader2, FileText } from "lucide-react";
+import { CheckCircle2, Loader2, FileText, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -58,6 +58,22 @@ interface OrderActionModalsProps {
   onClose: () => void;
 }
 
+const getLocalDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDisplayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${day}-${month}-${year}`;
+};
+
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (error instanceof AxiosError) {
     const detail = error.response?.data?.detail;
@@ -75,6 +91,7 @@ export function OrderActionModals({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
+  const [paymentMethodOpen, setPaymentMethodOpen] = useState(false);
 
   const editForm = useForm<EditOrderFormValues>({
     resolver: zodResolver(editOrderSchema),
@@ -89,7 +106,7 @@ export function OrderActionModals({
   const paymentForm = useForm<AddPaymentFormValues>({
     resolver: zodResolver(addPaymentSchema),
     defaultValues: {
-      payment_date: new Date().toISOString().slice(0, 10),
+      payment_date: getLocalDateString(),
       amount: "",
       payment_method: "cash",
     },
@@ -112,8 +129,8 @@ export function OrderActionModals({
     }
     if (action === "payment" && order) {
       paymentForm.reset({
-        payment_date: new Date().toISOString().slice(0, 10),
-        amount: "",
+        payment_date: getLocalDateString(),
+        amount: Math.round(parseFloat(order.remaining_balance)).toString(),
         payment_method: "cash",
       });
     }
@@ -124,7 +141,8 @@ export function OrderActionModals({
   }, [action, order, editForm, paymentForm]);
 
   const invalidateOrders = () => {
-    void queryClient.invalidateQueries({ queryKey: ["orders", "list"] });
+    // Use broad ["orders"] prefix to invalidate all order query variants (including those with filter params)
+    void queryClient.invalidateQueries({ queryKey: ["orders"] });
   };
 
   const editMutation = useMutation({
@@ -148,7 +166,8 @@ export function OrderActionModals({
     mutationFn: (file: File) => uploadOrderPdf(order!.id, file),
     onSuccess: () => {
       invalidateOrders();
-      void queryClient.invalidateQueries({ queryKey: ["order-items", order!.id] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.items(order!.id) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(order!.id) });
       onClose();
     },
   });
@@ -157,7 +176,8 @@ export function OrderActionModals({
     mutationFn: () => deleteOrderPdf(order!.id),
     onSuccess: () => {
       invalidateOrders();
-      void queryClient.invalidateQueries({ queryKey: ["order-items", order!.id] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.items(order!.id) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(order!.id) });
       onClose();
     },
   });
@@ -167,6 +187,8 @@ export function OrderActionModals({
       addOrderPayment(order!.id, values),
     onSuccess: () => {
       invalidateOrders();
+      // Invalidate payments so the balance updates immediately
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.payments(order!.id) });
       onClose();
       setPaymentSuccessOpen(true);
     },
@@ -410,54 +432,121 @@ export function OrderActionModals({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add New Payment</DialogTitle>
-            <DialogDescription>
-              {paymentInfo
-                ? `${paymentInfo.customer_name} — Balance: ${formatCurrency(paymentInfo.current_balance)}`
-                : order?.customer.name}
-            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handlePaymentSubmit} className="space-y-4">
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm">
-              <p className="font-medium text-zinc-900">{order?.customer.name}</p>
-              <p className="text-zinc-600">
-                Current Balance:{" "}
-                <span className="font-semibold text-red-600">
-                  {formatCurrency(order?.remaining_balance ?? "0")}
-                </span>
-              </p>
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3.5 text-xs flex justify-between items-center">
+              <div>
+                <p className="text-[10px] font-medium text-slate-900 uppercase tracking-wider">Order ID</p>
+                <p className="font-mono font-medium text-slate-900 mt-0.5">#{order?.order_number}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-medium text-slate-900">{order?.customer.name}</p>
+                {order?.customer.email && (
+                  <p className="text-[10px] text-slate-900 font-medium mt-0.5">{order.customer.email}</p>
+                )}
+                <p className="text-[10px] text-slate-900 font-medium mt-0.5">{order?.customer.phone}</p>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payment_date">Payment Date</Label>
+              <Label htmlFor="payment_date_display" className="text-[10px] font-medium text-slate-900 uppercase tracking-wider">Payment Date</Label>
               <Input
-                id="payment_date"
-                type="date"
+                id="payment_date_display"
+                type="text"
+                value={getLocalDisplayDateString()}
+                readOnly
+                className="h-9 text-xs border-slate-200 bg-slate-50 text-slate-900 cursor-not-allowed font-medium"
+              />
+              <input
+                type="hidden"
+                value={getLocalDateString()}
                 {...paymentForm.register("payment_date")}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (AWG)</Label>
-              <Input id="amount" {...paymentForm.register("amount")} />
+              <Label htmlFor="amount" className="text-[10px] font-medium text-slate-900 uppercase tracking-wider">Amount (AWG)</Label>
+              <Input
+                id="amount"
+                value={Math.round(parseFloat(order?.remaining_balance ?? "0"))}
+                readOnly
+                className="h-9 text-xs border-slate-200 bg-slate-50 text-slate-900 cursor-not-allowed font-medium"
+              />
+              <input
+                type="hidden"
+                value={Math.round(parseFloat(order?.remaining_balance ?? "0"))}
+                {...paymentForm.register("amount")}
+              />
               {paymentForm.formState.errors.amount && (
                 <p className="text-sm text-red-500">
                   {paymentForm.formState.errors.amount.message}
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="payment_method">Payment Method</Label>
-              <select
-                id="payment_method"
-                {...paymentForm.register("payment_method")}
-                className="flex h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {PAYMENT_METHODS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-2 relative">
+              <Label htmlFor="payment_method" className="text-[10px] font-medium text-slate-900 uppercase tracking-wider">Payment Method</Label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethodOpen(!paymentMethodOpen)}
+                  className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white py-1 pl-3 pr-3.5 text-xs font-bold text-slate-700 transition hover:border-slate-350 focus:border-violet-500 focus:outline-hidden cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.01)]"
+                >
+                  {PAYMENT_METHODS.find(m => m.value === paymentForm.watch("payment_method"))?.label || "Select Method"}
+                  <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform", paymentMethodOpen && "rotate-180")} />
+                </button>
+                
+                {paymentMethodOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setPaymentMethodOpen(false)}
+                    />
+                    <div className="absolute left-0 top-full mt-2 w-full rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg shadow-slate-200/50 z-50 flex flex-col gap-0.5">
+                      {PAYMENT_METHODS.map((m) => (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => {
+                            paymentForm.setValue("payment_method", m.value as "cash" | "transfer" | "pin");
+                            setPaymentMethodOpen(false);
+                          }}
+                          className={cn(
+                            "flex w-full items-center px-3 py-2.5 text-xs font-bold rounded-lg transition-colors cursor-pointer text-left",
+                            paymentForm.watch("payment_method") === m.value 
+                              ? "bg-violet-50 text-violet-700" 
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                          )}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <input type="hidden" {...paymentForm.register("payment_method")} />
+              </div>
             </div>
+
+            {/* Payments History List */}
+            {paymentInfo?.payments && paymentInfo.payments.length > 0 && (
+              <div className="pt-3.5 border-t border-zinc-100 space-y-2.5 max-h-40 overflow-y-auto pr-1">
+                <p className="text-[10px] font-medium text-slate-900 uppercase tracking-wider">Payment History</p>
+                <div className="space-y-1.5">
+                  {paymentInfo.payments.map((p) => (
+                    <div key={p.id} className="flex justify-between items-center text-xs p-2 rounded-xl bg-zinc-50/50 border border-zinc-100">
+                      <div>
+                        <p className="font-bold text-slate-900 uppercase text-[9px]">{p.payment_method_display || p.payment_method}</p>
+                        <p className="text-[9px] text-slate-900 font-medium">
+                          {new Date(p.paid_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                      </div>
+                      <span className="font-extrabold text-emerald-600">
+                        +{Math.round(parseFloat(p.amount))} AWG
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {addPaymentMutation.isError && (
               <p className="text-sm text-red-500">
