@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import * as XLSX from "xlsx";
 import { Plus, Download, FileText, Printer, ChevronDown } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -288,27 +289,41 @@ export function OrdersViewerPage() {
     win.onload = () => { win.focus(); win.print(); win.close(); };
   };
 
-  // CSV Export feature
+  // Excel Export feature
   const handleExport = () => {
-    const headers = ["Order ID", "Customer", "Date", "Total (AWG)", "Paid (AWG)", "Balance (AWG)", "Status"];
-    const rows = tabFilteredOrders.map(o => [
-      o.order_number,
-      o.customer.name,
-      o.order_date,
-      o.items_total,
-      o.paid_amount,
-      o.remaining_balance,
-      o.is_completed ? "Delivered" : o.is_in_myus ? "In MyUS" : o.is_uploaded ? "Uploaded" : "AZ Ordered"
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Transform orders data into a flat format for Excel
+    const exportData = tabFilteredOrders.map(o => ({
+      "Order ID": o.order_number || "-",
+      "Customer Name": o.customer?.name || "-",
+      "Phone Number": o.customer?.phone || "-",
+      "Email Address": o.customer?.email || "-",
+      "Order Date": o.order_date || "-",
+      "Items Count": o.number_of_items || 0,
+      "Total Amount (AWG)": parseFloat(o.items_total) || 0,
+      "Paid Amount (AWG)": parseFloat(o.paid_amount) || 0,
+      "Balance (AWG)": parseFloat(o.remaining_balance) || 0,
+      "Status": o.is_completed ? "Delivered" : o.is_in_myus ? "In MyUS" : o.is_uploaded ? "Uploaded" : "AZ Ordered",
+      "Urgent": o.is_urgent ? "Yes" : "No",
+      "Internal Notes": o.internal_notes || "-",
+      "Client Notes": o.client_notes || "-"
+    }));
+
+    // Create workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+
+    // Optional: Auto-size columns based on the longest string in each column
+    const colWidths = Object.keys(exportData[0] || {}).map(key => ({
+      wch: Math.max(
+        key.length,
+        ...exportData.map(row => String((row as any)[key]).length)
+      ) + 2
+    }));
+    worksheet["!cols"] = colWidths;
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, `Ship2Aruba_Orders_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const showTableLoading = isLoading || (isFetching && tabFilteredOrders.length === 0);
