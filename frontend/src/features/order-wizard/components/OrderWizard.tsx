@@ -173,7 +173,7 @@ export function OrderWizard() {
         }
 
         const isAruba = phoneCode === "+297";
-        const isValidLength = isAruba ? newPhone.length === 7 : (newPhone.length === 9 || newPhone.length === 10);
+        const isValidLength = isAruba ? newPhone?.length === 7 : (newPhone?.length === 9 || newPhone?.length === 10);
 
         // 3. Validate Phone Number
         if (!newPhone) {
