@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const positiveNumber = z.coerce.number().positive();
+
 
 export const step1Schema = z.object({
   customer: z.object({
@@ -12,16 +12,16 @@ export const step1Schema = z.object({
 });
 
 export const step2Schema = z.object({
-  website_type: z.enum(["amazon", "ebay", "other"], { errorMap: () => ({ message: "Please select a website to continue" }) }),
+  website_type: z.enum(["amazon", "ebay", "other"] as const, { message: "Please select a website to continue" }),
   website: z.string().min(1, "Order website is required"),
   order_date: z.string().min(1, "Order date is required"),
-  number_of_items: z.coerce.number({ invalid_type_error: "Please enter number of items" }).int("Only whole numbers allowed").min(1, "Number of items must be at least 1"),
-  amount_usd: z.coerce.number({ invalid_type_error: "Please enter the value of items" }).int("Only whole numbers allowed").min(1, "Please enter the value of items"),
-  items_total: z.coerce.number({ invalid_type_error: "Please enter the total invoice amount" }).int("Only whole numbers allowed").min(1, "Please enter the total invoice amount"),
+  number_of_items: z.coerce.number({ message: "Please enter number of items" }).int("Only whole numbers allowed").min(1, "Number of items must be at least 1"),
+  amount_usd: z.coerce.number({ message: "Please enter the value of items" }).int("Only whole numbers allowed").min(1, "Please enter the value of items"),
+  items_total: z.coerce.number({ message: "Please enter the total invoice amount" }).int("Only whole numbers allowed").min(1, "Please enter the total invoice amount"),
 });
 
 export const step3Schema = z.object({
-  payment_type: z.enum(["one", "two"], { errorMap: () => ({ message: "Please select a payment type to continue" }) }),
+  payment_type: z.enum(["one", "two"] as const, { message: "Please select a payment type to continue" }),
   payment_amount: z.coerce.number().min(0),
   paid_amount: z.coerce.number().int("Only whole numbers allowed").min(0),
   payment_method: z.enum(["cash", "pin", "transfer"]),

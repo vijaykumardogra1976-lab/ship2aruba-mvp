@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Banknote, CreditCard, FileCheck2, ShoppingBag, Landmark, Check, CheckCircle2 } from "lucide-react";
+import { Banknote, CreditCard, FileCheck2, Landmark, Check, CheckCircle2 } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import { PAYMENT_TYPE_OPTIONS, PAYMENT_METHOD_OPTIONS } from "../constants";
 import type { OrderFormData, PaymentType, PaymentMethod } from "../types";
@@ -16,7 +16,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
   const paidAmount = watch("paid_amount");
   const paymentMethod = watch("payment_method");
 
-  const paymentAmountField = register("payment_amount");
+
 
   const itemsTotal = watch("items_total");
 
