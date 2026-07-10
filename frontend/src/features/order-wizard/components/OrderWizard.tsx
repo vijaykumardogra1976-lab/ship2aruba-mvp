@@ -64,6 +64,8 @@ export function OrderWizard() {
 
   const customer = form.watch("customer");
   
+  // Payment Validation
+  const paymentType = form.watch("payment_type");
   const itemsTotal = form.watch("items_total");
   const paidAmount = form.watch("paid_amount");
   
