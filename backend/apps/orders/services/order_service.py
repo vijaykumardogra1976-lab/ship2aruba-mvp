@@ -23,7 +23,8 @@ class OrderService:
         customer = Customer.objects.get(pk=validated_data["customer_id"])
         paid_amount = validated_data["paid_amount"]
         payment_amount = validated_data["payment_amount"]
-        remaining_balance = validated_data["items_total"] - paid_amount - payment_amount
+        total_paid_amount = paid_amount + payment_amount
+        remaining_balance = validated_data["items_total"] - total_paid_amount
 
         with transaction.atomic():
             order = Order.objects.create(
@@ -37,7 +38,7 @@ class OrderService:
                 payment_type=validated_data["payment_type"],
                 payment_amount=validated_data["payment_amount"],
                 items_total=validated_data["items_total"],
-                paid_amount=paid_amount,
+                paid_amount=total_paid_amount,
                 remaining_balance=remaining_balance,
                 payment_method=validated_data["payment_method"],
                 is_new_client=validated_data.get("is_new_client", False),
@@ -62,7 +63,7 @@ class OrderService:
                 payment=payment,
                 action=PaymentHistory.ACTION_CREATED,
                 previous_paid_amount=paid_amount,
-                new_paid_amount=paid_amount + payment_amount,
+                new_paid_amount=total_paid_amount,
                 change_amount=payment_amount,
                 changed_by=user,
             )

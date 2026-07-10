@@ -380,7 +380,7 @@ def _recalculate_order_totals(order):
     items = order.items.all()
     if not items.exists():
         order.number_of_items = 0
-        order.remaining_balance = order.items_total - order.paid_amount - order.payment_amount
+        order.remaining_balance = order.items_total - order.paid_amount
         order.save(update_fields=["number_of_items", "remaining_balance"])
         
         if hasattr(order, "invoice"):
@@ -395,7 +395,7 @@ def _recalculate_order_totals(order):
     total_qty = sum(item.quantity for item in items)
 
     order.number_of_items = total_qty
-    order.remaining_balance = order.items_total - order.paid_amount - order.payment_amount
+    order.remaining_balance = order.items_total - order.paid_amount
     order.save(update_fields=["number_of_items", "remaining_balance"])
 
     if hasattr(order, "invoice"):
