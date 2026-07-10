@@ -1,12 +1,13 @@
 import type { UseFormReturn } from "react-hook-form";
 import type { OrderFormData } from "../types";
+import { cn } from "@/lib/utils";
 import {
   paymentMethodLabel,
   paymentTypeLabel,
 } from "../utils/calculations";
 import {
+  Banknote,
   Calendar,
-  DollarSign,
   FileCheck2,
   FileText,
   Globe,
@@ -42,15 +43,15 @@ function PreviewRow({
 
 export function OrderPreview({ form }: OrderPreviewProps) {
   const v = form.getValues();
-  const computedItemsTotal = v.payment_type === "two"
-    ? Number(v.payment_amount || 0) * 2
-    : Number(v.payment_amount || 0);
-  const remaining = Math.max(0, computedItemsTotal - Number(v.paid_amount || 0));
+  const computedItemsTotal = Number(v.items_total || 0);
+  const balanceAmount = Math.max(0, computedItemsTotal - Number(v.paid_amount || 0));
+  const remaining = Math.max(0, balanceAmount - Number(v.payment_amount || 0));
 
   const formatCurrency = (val: string | number | undefined | null) => {
     if (val === undefined || val === null || val === "") return "0 AWG";
     const num = Number(val);
-    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
+    if (Number.isNaN(num)) return "0 AWG";
+    return Number.isInteger(num) ? `${num} AWG` : `${num.toFixed(2)} AWG`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -91,9 +92,9 @@ export function OrderPreview({ form }: OrderPreviewProps) {
             value={v.number_of_items !== "" ? `${v.number_of_items} Items` : "-"}
           />
           <PreviewRow
-            icon={DollarSign}
-            label="Amount in USD"
-            value={v.amount_usd !== "" ? `${Math.round(Number(v.amount_usd))}` : "-"}
+            icon={Banknote}
+            label="Value of Items (AWG)"
+            value={v.amount_usd !== "" ? formatCurrency(v.amount_usd) : "-"}
           />
         </div>
 
@@ -143,24 +144,28 @@ export function OrderPreview({ form }: OrderPreviewProps) {
               <span>Invoice Total</span>
               <span className="text-slate-950 font-black">{formatCurrency(computedItemsTotal)}</span>
             </div>
-            {/* Per Installment — only for Two Payments */}
-            {v.payment_type === "two" && (
-              <div className="flex items-center justify-between text-slate-500">
-                <span className="text-[10px]">Per Installment</span>
-                <span className="text-slate-700 font-bold text-[10px]">{formatCurrency(v.payment_amount)}</span>
-              </div>
-            )}
             {/* Paid Amount */}
-            {Number(v.paid_amount) > 0 && (
-              <div className="flex items-center justify-between">
-                <span>Paid Amount</span>
-                <span className="text-slate-950 font-black">{formatCurrency(v.paid_amount)}</span>
+            <div className="flex items-center justify-between">
+              <span>Paid Amount</span>
+              <span className="text-slate-950 font-black">{formatCurrency(v.paid_amount)}</span>
+            </div>
+
+            {/* Balance Amount — only for Two Payments */}
+            {v.payment_type === "two" && (
+              <div className="flex items-center justify-between border-y border-slate-200/80 py-2">
+                <span>Balance Amount</span>
+                <span className="text-slate-950 font-black">{formatCurrency(balanceAmount)}</span>
               </div>
             )}
+            {/* Payment Amount */}
+            <div className={cn("flex items-center justify-between text-violet-650", v.payment_type === "one" ? "border-t border-slate-200/80 pt-2" : "")}>
+              <span>Payment Amount</span>
+              <span className="text-sm font-extrabold">{formatCurrency(v.payment_amount)}</span>
+            </div>
             {/* Balance Due */}
-            <div className="flex items-center justify-between border-t border-slate-200/80 pt-2 text-violet-650">
+            <div className="flex items-center justify-between">
               <span>Balance Due</span>
-              <span className="text-sm font-extrabold">{formatCurrency(remaining)}</span>
+              <span className="text-slate-950 font-black">{formatCurrency(remaining)}</span>
             </div>
             {/* Divider: Payment Type & Method */}
             <div className="border-t border-slate-200/80 pt-2 space-y-2">

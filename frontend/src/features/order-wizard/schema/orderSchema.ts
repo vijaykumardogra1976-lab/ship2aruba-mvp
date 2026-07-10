@@ -12,7 +12,7 @@ export const step1Schema = z.object({
 });
 
 export const step2Schema = z.object({
-  website_type: z.enum(["amazon", "ebay", "other"]),
+  website_type: z.enum(["amazon", "ebay", "other"] as const, { message: "Please select a website to continue" }),
   website: z.string().min(1, "Order website is required"),
   order_date: z.string().min(1, "Order date is required"),
   number_of_items: positiveNumber.refine((v) => v > 0, "Items must be greater than 0"),
@@ -20,11 +20,11 @@ export const step2Schema = z.object({
 });
 
 export const step3Schema = z.object({
-  payment_type: z.enum(["one", "two"]),
+  payment_type: z.enum(["one", "two"] as const, { message: "Please select a payment type to continue" }),
   payment_amount: z.coerce.number().min(0),
   items_total: positiveNumber,
   paid_amount: z.coerce.number().min(0),
-  payment_method: z.enum(["cash", "pin", "transfer"]),
+  payment_method: z.enum(["cash", "pin", "transfer"] as const),
 });
 
 export const step4Schema = z.object({

@@ -29,16 +29,16 @@ const defaultValues: OrderFormData = {
   new_customer_phone: "",
   new_customer_email: "",
   new_customer_phone_code: "+297",
-  website_type: "",
-  website: "",
+  website_type: "amazon",
+  website: "Amazon",
   order_date: "",
   number_of_items: "",
   amount_usd: "",
-  payment_type: "",
+  payment_type: "one",
   payment_amount: "",
   items_total: "",
-  paid_amount: "",
-  payment_method: "",
+  paid_amount: 0,
+  payment_method: "cash",
   is_new_client: false,
   is_urgent: false,
   internal_notes: "",
@@ -64,14 +64,10 @@ export function OrderWizard() {
 
   const customer = form.watch("customer");
   
-  // Payment Validation
-  const paymentType = form.watch("payment_type");
-  const paymentAmount = form.watch("payment_amount");
+  const itemsTotal = form.watch("items_total");
   const paidAmount = form.watch("paid_amount");
   
-  const computedItemsTotal = paymentType === "two"
-    ? Number(paymentAmount || 0) * 2
-    : Number(paymentAmount || 0);
+  const computedItemsTotal = Number(itemsTotal || 0);
     
   const isPaymentInvalid = step === 3 && (Number(paidAmount || 0) > computedItemsTotal);
 

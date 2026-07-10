@@ -50,7 +50,8 @@ export function NotesSection({ form }: NotesSectionProps) {
   const paymentMethod = watch("payment_method") || "";
   const orderDate = watch("order_date");
 
-  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paidAmount));
+  const balanceAmount = Math.max(0, Number(itemsTotal) - Number(paidAmount));
+  const balanceDue = Math.max(0, balanceAmount - Number(paymentAmount));
 
   const handleNewClientClick = () => {
     setValue("is_new_client", !isNewClient, { shouldDirty: true });
@@ -63,7 +64,8 @@ export function NotesSection({ form }: NotesSectionProps) {
   const formatCurrency = (val: string | number | undefined | null) => {
     if (val === undefined || val === null || val === "") return "0 AWG";
     const num = Number(val);
-    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
+    if (Number.isNaN(num)) return "0 AWG";
+    return Number.isInteger(num) ? `${num} AWG` : `${num.toFixed(2)} AWG`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -219,22 +221,28 @@ export function NotesSection({ form }: NotesSectionProps) {
               <span>Invoice Total</span>
               <span className="text-slate-900 font-bold">{formatCurrency(itemsTotal)}</span>
             </div>
-            {/* Per Installment — only for Two Payments */}
-            {paymentType === "two" && (
-              <div className="flex items-center justify-between text-slate-500">
-                <span className="text-[10px]">Per Installment</span>
-                <span className="text-slate-700 font-bold text-[10px]">{formatCurrency(paymentAmount)}</span>
-              </div>
-            )}
             {/* Paid Amount */}
             <div className="flex items-center justify-between">
               <span>Paid Amount</span>
               <span className="text-slate-900 font-bold">{formatCurrency(paidAmount)}</span>
             </div>
+
+            {/* Balance Amount — only for Two Payments */}
+            {paymentType === "two" && (
+              <div className="flex items-center justify-between border-y border-slate-200/60 py-2.5">
+                <span>Balance Amount</span>
+                <span className="text-slate-900 font-bold">{formatCurrency(balanceAmount)}</span>
+              </div>
+            )}
+            {/* Payment Amount */}
+            <div className={cn("flex items-center justify-between text-violet-750", paymentType === "one" ? "border-t border-slate-200/60 pt-2.5" : "")}>
+              <span>Payment Amount</span>
+              <span className="text-violet-700 font-extrabold text-sm">{formatCurrency(paymentAmount)}</span>
+            </div>
             {/* Balance Due */}
-            <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5 text-violet-750">
+            <div className="flex items-center justify-between">
               <span>Balance Due</span>
-              <span className="text-violet-700 font-extrabold text-sm">{formatCurrency(balanceDue)}</span>
+              <span className="text-slate-900 font-bold">{formatCurrency(balanceDue)}</span>
             </div>
             {/* Divider: Payment Type & Method */}
             <div className="border-t border-slate-200/60 pt-2.5 space-y-2.5">

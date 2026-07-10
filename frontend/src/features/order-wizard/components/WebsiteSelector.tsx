@@ -128,6 +128,9 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
               );
             })}
           </div>
+          {(errors.website_type || errors.website) && !websiteType && (
+            <p className="text-[10px] text-amber-600 font-semibold">Please select a website to continue</p>
+          )}
         </div>
 
         {/* Text Input Grid */}
@@ -145,7 +148,7 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
                 className="h-8.5 text-xs border-slate-200 text-slate-900"
               />
               {errors.website && (
-                <p className="text-[10px] text-red-500 font-semibold">{errors.website.message}</p>
+                <p className="text-[10px] text-amber-600 font-semibold">{errors.website.message}</p>
               )}
             </div>
           ) : websiteType === "amazon" || websiteType === "ebay" ? (
@@ -189,7 +192,7 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
               />
             </div>
             {errors.order_date && (
-              <p className="text-[10px] text-red-500 font-semibold">{errors.order_date.message}</p>
+              <p className="text-[10px] text-amber-600 font-semibold">{errors.order_date.message}</p>
             )}
           </div>
 
@@ -204,37 +207,59 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
                 id="number_of_items"
                 type="number"
                 min={1}
+                step={1}
                 placeholder="Enter number of items"
+                onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
                 {...register("number_of_items")}
                 className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>
             {errors.number_of_items && (
-              <p className="text-[10px] text-red-500 font-semibold">{errors.number_of_items.message}</p>
+              <p className="text-[10px] text-amber-600 font-semibold">{errors.number_of_items.message}</p>
             )}
           </div>
 
           {/* Amount in USD */}
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="amount_usd">
-              Amount in USD *
+              Value of items (AWG) *
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-550 pointer-events-none">
-                $
-              </span>
               <input
                 id="amount_usd"
                 type="number"
-                min={0.01}
-                step="0.01"
+                min={1}
+                step={1}
                 placeholder="Enter amount"
+                onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
                 {...register("amount_usd")}
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-7.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
+                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>
             {errors.amount_usd && (
-              <p className="text-[10px] text-red-500 font-semibold">{errors.amount_usd.message}</p>
+              <p className="text-[10px] text-amber-600 font-semibold">{errors.amount_usd.message}</p>
+            )}
+          </div>
+          
+          {/* Total Invoice Amount (AWG) */}
+          <div className="space-y-1 sm:col-span-2 sm:max-w-[calc(50%-6px)]">
+            <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="items_total">
+              Total Invoice Amount (AWG) *
+            </label>
+            <div className="relative">
+              <input
+                id="items_total"
+                type="number"
+                min={1}
+                step={1}
+                placeholder="Enter total invoice amount"
+                onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                {...register("items_total")}
+                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
+              />
+            </div>
+            {errors.items_total && (
+              <p className="text-[10px] text-amber-600 font-semibold">{errors.items_total.message}</p>
             )}
           </div>
         </div>
