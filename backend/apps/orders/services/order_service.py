@@ -22,9 +22,7 @@ class OrderService:
     def create_order(*, user, validated_data: dict) -> Order:
         customer = Customer.objects.get(pk=validated_data["customer_id"])
         paid_amount = validated_data["paid_amount"]
-        payment_amount = validated_data["payment_amount"]
-        total_paid_amount = paid_amount + payment_amount
-        remaining_balance = validated_data["items_total"] - total_paid_amount
+        remaining_balance = validated_data["items_total"] - paid_amount
 
         with transaction.atomic():
             order = Order.objects.create(
@@ -38,7 +36,7 @@ class OrderService:
                 payment_type=validated_data["payment_type"],
                 payment_amount=validated_data["payment_amount"],
                 items_total=validated_data["items_total"],
-                paid_amount=total_paid_amount,
+                paid_amount=paid_amount,
                 remaining_balance=remaining_balance,
                 payment_method=validated_data["payment_method"],
                 is_new_client=validated_data.get("is_new_client", False),
@@ -52,7 +50,7 @@ class OrderService:
             payment = Payment.objects.create(
                 order=order,
                 sequence=1,
-                amount=validated_data["payment_amount"],  # amount being paid in this installment
+                amount=validated_data["paid_amount"],  # actual amount customer paid now
                 payment_method=order.payment_method,
                 payment_type=order.payment_type,
                 recorded_by=user,
@@ -62,9 +60,9 @@ class OrderService:
                 order=order,
                 payment=payment,
                 action=PaymentHistory.ACTION_CREATED,
-                previous_paid_amount=paid_amount,
-                new_paid_amount=total_paid_amount,
-                change_amount=payment_amount,
+                previous_paid_amount=Decimal("0.00"),
+                new_paid_amount=order.paid_amount,
+                change_amount=order.paid_amount,
                 changed_by=user,
             )
 
@@ -85,7 +83,7 @@ class OrderService:
                 company_phone=settings.COMPANY_PHONE,
                 subtotal=order.items_total,
                 total=order.items_total,
-                paid=order.payment_amount,
+                paid=order.paid_amount,
                 remaining_balance=order.remaining_balance,
             )
 

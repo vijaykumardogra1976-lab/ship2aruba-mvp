@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { Banknote, CreditCard, FileCheck2, Landmark, Check, CheckCircle2 } from "lucide-react";
+import { Banknote, CreditCard, FileCheck2, ShoppingBag, Landmark, Check, CheckCircle2 } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import { PAYMENT_TYPE_OPTIONS, PAYMENT_METHOD_OPTIONS } from "../constants";
 import type { OrderFormData, PaymentType, PaymentMethod } from "../types";
@@ -16,29 +15,48 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
   const paidAmount = watch("paid_amount");
   const paymentMethod = watch("payment_method");
 
+  const paymentAmountField = register("payment_amount");
 
+  /**
+   * ONE PAYMENT:
+   *   - payment_amount = invoice amount (user inputs)
+   *   - paid_amount    = what customer pays now (auto-fills to payment_amount, user can override)
+   *   - items_total    = same as payment_amount (computed, read-only)
+   *
+   * TWO PAYMENTS:
+   *   - payment_amount = one installment invoice amount (user inputs)
+   *   - items_total    = payment_amount * 2 (computed, read-only)
+   *   - paid_amount    = what customer pays now (user inputs separately)
+   */
 
-  const itemsTotal = watch("items_total");
+  // Called when user changes "Payment Amount" field
+  const handlePaymentAmountChange = (amountVal: string | number) => {
+    const amount = amountVal === "" ? 0 : Number(amountVal);
 
-  // Auto-calculate payment_amount (installment) based on balance and payment_type
-  useEffect(() => {
-    const total = itemsTotal === "" ? 0 : Number(itemsTotal);
-    const paid = paidAmount === "" ? 0 : Number(paidAmount);
-    const balance = Math.max(0, total - paid);
-
-    if (!Number.isNaN(balance)) {
+    if (!Number.isNaN(amount)) {
       if (paymentType === "one") {
-        setValue("payment_amount", balance === 0 ? "" : balance, { shouldValidate: true, shouldDirty: true });
-      } else if (paymentType === "two") {
-        setValue("payment_amount", balance === 0 ? "" : balance / 2, { shouldValidate: true, shouldDirty: true });
+        // items_total = payment_amount (same for one payment — set silently for backend)
+        setValue("items_total", amount === 0 ? "" : amount, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      } else {
+        // TWO PAYMENTS: items_total = payment_amount * 2
+        const total = amount * 2;
+        setValue("items_total", total === 0 ? "" : total, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
       }
     }
-  }, [itemsTotal, paidAmount, paymentType, setValue]);
+  };
 
-  // Called when user changes "Paid Amount" field — cap at max allowed (invoice total)
+  // Called when user changes "Paid Amount" field — cap at max allowed
   const handlePaidAmountChange = (paidVal: string | number) => {
     const paid = paidVal === "" ? 0 : Number(paidVal);
-    const maxAllowed = itemsTotal === "" ? 0 : Number(itemsTotal);
+    const maxAllowed = paymentType === "two"
+      ? Number(paymentAmount || 0) * 2
+      : Number(paymentAmount || 0);
 
     if (paid > maxAllowed && maxAllowed > 0) {
       setValue("paid_amount", maxAllowed, { shouldValidate: true, shouldDirty: true });
@@ -47,7 +65,33 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
 
   const selectType = (type: PaymentType) => {
     setValue("payment_type", type, { shouldValidate: true, shouldDirty: true });
-    // paid_amount is preserved when switching payment types
+
+    // Recalculate items_total based on current payment_amount when switching type
+    const amt = paymentAmount === "" ? 0 : Number(paymentAmount);
+    if (!Number.isNaN(amt)) {
+      if (type === "one") {
+        setValue("items_total", amt === 0 ? "" : amt, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        
+        // Cap paid_amount to new total
+        if (Number(paidAmount) > amt) {
+          setValue("paid_amount", amt, { shouldValidate: true, shouldDirty: true });
+        }
+      } else {
+        const total = amt * 2;
+        setValue("items_total", total === 0 ? "" : total, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        // Clear paid_amount so user enters it fresh
+        setValue("paid_amount", "", {
+          shouldValidate: false,
+          shouldDirty: true,
+        });
+      }
+    }
   };
 
   const selectMethod = (method: PaymentMethod) => {
@@ -56,14 +100,14 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
 
   const formatCurrency = (val: string | number) => {
     const num = Number(val);
-    if (Number.isNaN(num)) return "0.00 AWG";
-    return Number.isInteger(num) ? `${num} AWG` : `${num.toFixed(2)} AWG`;
+    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
   };
 
-  // Balance Amount and Balance Due calculation
-  const computedItemsTotal = Number(itemsTotal || 0);
-  const balanceAmount = Math.max(0, computedItemsTotal - Number(paidAmount || 0));
-  const balanceDue = Math.max(0, balanceAmount - Number(paymentAmount || 0));
+  // Balance Due calculation
+  const computedItemsTotal = paymentType === "two"
+    ? Number(paymentAmount || 0) * 2
+    : Number(paymentAmount || 0);
+  const balanceDue = Math.max(0, computedItemsTotal - Number(paidAmount || 0));
 
   const getAlertText = () => {
     switch (paymentMethod) {
@@ -143,7 +187,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             })}
           </div>
           {errors.payment_type && (
-            <p className="text-[10px] text-amber-600 font-semibold">{errors.payment_type.message}</p>
+            <p className="text-[10px] text-red-500 font-semibold">{errors.payment_type.message}</p>
           )}
         </div>
 
@@ -158,44 +202,47 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             <div className="relative">
               <input
                 id="payment_amount"
-                type="text"
-                readOnly
-                tabIndex={-1}
-                value={
-                  paymentAmount === "" || paymentAmount === undefined
-                    ? ""
-                    : Number.isInteger(Number(paymentAmount))
-                    ? `${Number(paymentAmount)}`
-                    : `${Number(paymentAmount).toFixed(2)}`
-                }
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-slate-50 pl-3 pr-3 text-xs font-semibold text-slate-500 focus:outline-hidden pointer-events-none select-none"
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Enter invoice amount"
+                {...paymentAmountField}
+                onChange={(event) => {
+                  paymentAmountField.onChange(event);
+                  handlePaymentAmountChange(event.target.value);
+                }}
+                className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>
 
             {errors.payment_amount && (
-              <p className="text-[10px] text-amber-600 font-semibold">{errors.payment_amount.message}</p>
+              <p className="text-[10px] text-red-500 font-semibold">{errors.payment_amount.message}</p>
             )}
           </div>
 
-          {/* Items Total — always shown */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="items_total">
-              Total Invoice Amount (AWG)
-            </label>
-            <div className="relative">
-              <input
-                id="items_total"
-                type="number"
-                readOnly
-                tabIndex={-1}
-                {...register("items_total")}
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-slate-50 pl-3 pr-3 text-xs font-semibold text-slate-500 focus:outline-hidden pointer-events-none select-none"
-              />
+          {/* Items Total — only shown for Two Payments (payment_amount × 2) */}
+          {paymentType === "two" && (
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="items_total">
+                Items Total Amount (AWG)
+              </label>
+              <div className="relative">
+                <ShoppingBag className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <input
+                  id="items_total"
+                  type="number"
+                  readOnly
+                  tabIndex={-1}
+                  {...register("items_total")}
+                  className="h-8.5 w-full rounded-lg border border-slate-200 bg-slate-50 pl-8.5 pr-3 text-xs font-semibold text-slate-500 focus:outline-hidden pointer-events-none select-none"
+                />
+              </div>
+
             </div>
-          </div>
+          )}
 
           {/* Paid Amount — always shown, user inputs actual amount paid now */}
-          <div className="space-y-1 sm:col-span-1">
+          <div className="space-y-1 sm:col-span-2 sm:max-w-[calc(50%-8px)]">
             <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider" htmlFor="paid_amount">
               Paid Amount (AWG) *
             </label>
@@ -204,8 +251,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                 id="paid_amount"
                 type="number"
                 min={0}
-                step={1}
-                onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                step="0.01"
                 {...register("paid_amount", {
                   onChange: (event) => {
                     handlePaidAmountChange(event.target.value);
@@ -218,46 +264,17 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
               <p className="text-[10px] text-red-500 font-semibold">Paid amount cannot exceed invoice total ({computedItemsTotal} AWG)</p>
             )}
             {errors.paid_amount && (
-              <p className="text-[10px] text-amber-600 font-semibold">{errors.paid_amount.message}</p>
+              <p className="text-[10px] text-red-500 font-semibold">{errors.paid_amount.message}</p>
             )}
-          </div>
-
-          {/* Balance Amount — calculated */}
-          <div className="space-y-1 sm:col-span-1">
-            <label className="text-[10px] font-bold text-slate-750 uppercase tracking-wider">
-              Balance Amount (AWG)
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                readOnly
-                value={balanceAmount}
-                className="h-8.5 w-full rounded-lg border border-slate-200 bg-slate-50 pl-3 pr-3 text-xs font-semibold text-slate-500 focus:outline-hidden pointer-events-none select-none"
-              />
-            </div>
           </div>
         </div>
 
         {/* Payment Method Cards */}
-        <div className="space-y-4 pt-4 border-t border-slate-100">
-          {/* Payment Amount Highlight Banner */}
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              <span className="text-xs font-bold text-emerald-900">
-                You are paying right now:
-              </span>
-            </div>
-            <span className="text-sm font-black text-emerald-700">
-              {formatCurrency(paymentAmount)}
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-              Select the order payment method *
-            </p>
-            <div className="grid gap-3 grid-cols-3">
+        <div className="space-y-2 pt-4 border-t border-slate-100">
+          <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+            Select the order payment method *
+          </p>
+          <div className="grid gap-3 grid-cols-3">
             {PAYMENT_METHOD_OPTIONS.map((opt) => {
               const methodIcons = { cash: Banknote, pin: CreditCard, transfer: Landmark };
               const methodColors = { cash: "text-violet-650", pin: "text-blue-500", transfer: "text-blue-600" };
@@ -296,7 +313,6 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             })}
           </div>
         </div>
-        </div>
 
         {/* Payment Alert Banner */}
         {paymentMethod && (
@@ -307,58 +323,73 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
         )}
       </div>
 
-      {/* Right Panel: Order Summary Card */}
+      {/* Right Panel: Order Summary Card — Modern */}
       <div className="w-80 shrink-0 border-l border-slate-100 pl-5 flex flex-col justify-center">
-        <div className="rounded-xl border border-slate-200 bg-violet-50/10 p-4 space-y-3.5">
-          <div className="flex items-center gap-2">
-            <FileCheck2 className="h-4.5 w-4.5 text-violet-650" />
-            <span className="text-xs font-bold text-slate-900">Order Summary</span>
+        <div className="rounded-2xl overflow-hidden border border-violet-100 shadow-[0_4px_24px_rgba(124,58,237,0.10)]">
+
+          {/* Header */}
+          <div className="bg-gradient-to-br from-violet-600 to-violet-700 px-4 py-3 flex items-center gap-2.5">
+            <FileCheck2 className="h-4.5 w-4.5 text-violet-200 shrink-0" />
+            <span className="text-xs font-black text-white tracking-wide uppercase">Order Summary</span>
           </div>
 
-          <div className="space-y-2.5 text-xs text-slate-700 font-semibold">
-            {/* Invoice Total */}
+          {/* Body */}
+          <div className="bg-white px-4 py-3.5 space-y-3">
+
+            {/* Invoice Total — hero row */}
             <div className="flex items-center justify-between">
-              <span>Invoice Total</span>
-              <span className="text-slate-900 font-bold">{formatCurrency(computedItemsTotal)}</span>
-            </div>
-            {/* Paid Amount */}
-            <div className="flex items-center justify-between">
-              <span>Paid Amount</span>
-              <span className="text-slate-900 font-bold">{formatCurrency(paidAmount)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Invoice Total</span>
+              <span className="text-base font-black text-slate-900">{formatCurrency(computedItemsTotal)} <span className="text-[10px] font-semibold text-slate-400">AWG</span></span>
             </div>
 
-            {/* Balance Amount — only for Two Payments */}
+            {/* Per Installment — only for Two Payments */}
             {paymentType === "two" && (
-              <div className="flex items-center justify-between border-y border-slate-200/60 py-2.5">
-                <span>Balance Amount</span>
-                <span className="text-slate-900 font-bold">{formatCurrency(balanceAmount)}</span>
+              <div className="flex items-center justify-between bg-violet-50/60 rounded-lg px-2.5 py-1.5">
+                <span className="text-[10px] font-bold text-violet-600 uppercase tracking-wider">Per Installment</span>
+                <span className="text-[11px] font-black text-violet-700">{formatCurrency(paymentAmount)} <span className="text-[9px] font-semibold text-violet-400">AWG</span></span>
               </div>
             )}
-            {/* Payment Amount */}
-            <div className={cn("flex items-center justify-between text-violet-750", paymentType === "one" ? "border-t border-slate-200/60 pt-2.5" : "")}>
-              <span>Payment Amount</span>
-              <span className="text-violet-700 font-extrabold text-sm">{formatCurrency(paymentAmount)}</span>
-            </div>
-            {/* Balance Due */}
+
+            <div className="border-t border-slate-100" />
+
+            {/* Paid Amount */}
             <div className="flex items-center justify-between">
-              <span>Balance Due</span>
-              <span className="text-slate-900 font-bold">{formatCurrency(balanceDue)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Paid Amount</span>
+              <span className="text-sm font-black text-emerald-600">{formatCurrency(paidAmount)} <span className="text-[10px] font-semibold text-emerald-400">AWG</span></span>
             </div>
-            {/* Divider */}
-            <div className="border-t border-slate-200/60 pt-2.5 space-y-2.5">
+
+            {/* Balance Due — highlighted */}
+            <div className={`rounded-xl px-3 py-2.5 flex items-center justify-between ${
+              Number(balanceDue) > 0
+                ? "bg-rose-50 border border-rose-100"
+                : "bg-emerald-50 border border-emerald-100"
+            }`}>
+              <span className={`text-[10px] font-black uppercase tracking-wider ${Number(balanceDue) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                Balance Due
+              </span>
+              <span className={`text-base font-black ${Number(balanceDue) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                {formatCurrency(balanceDue)} <span className="text-[10px] font-semibold opacity-70">AWG</span>
+              </span>
+            </div>
+
+            <div className="border-t border-slate-100" />
+
+            {/* Payment Type & Method — pill badges */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span>Payment Type</span>
-                <span className="text-slate-900 font-extrabold uppercase text-[10px]">
-                  {paymentType === "one" ? "One Payment" : paymentType === "two" ? "Two Payments" : "-"}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Payment Type</span>
+                <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-100 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-violet-700">
+                  {paymentType === "one" ? "One Payment" : paymentType === "two" ? "Two Payments" : "—"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Payment Method</span>
-                <span className="text-slate-900 font-extrabold uppercase text-[10px]">
-                  {paymentMethod ? paymentMethod : "-"}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Payment Method</span>
+                <span className="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-700">
+                  {paymentMethod ? paymentMethod : "—"}
                 </span>
               </div>
             </div>
+
           </div>
         </div>
       </div>

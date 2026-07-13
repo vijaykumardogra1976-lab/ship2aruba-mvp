@@ -302,7 +302,7 @@ export function OrdersViewerPage() {
       "Total Amount (AWG)": parseFloat(o.items_total) || 0,
       "Paid Amount (AWG)": parseFloat(o.paid_amount) || 0,
       "Balance (AWG)": parseFloat(o.remaining_balance) || 0,
-      "Status": o.is_completed ? "Delivered" : o.is_in_myus ? "In MyUS" : o.is_uploaded ? "Uploaded" : "AZ Ordered",
+      "Status": o.is_completed ? "Completed" : o.is_in_myus ? "In MyUS" : o.is_uploaded ? "Uploaded" : "AZ Ordered",
       "Urgent": o.is_urgent ? "Yes" : "No",
       "Internal Notes": o.internal_notes || "-",
       "Client Notes": o.client_notes || "-"
@@ -331,13 +331,13 @@ export function OrdersViewerPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1750px] xl:max-w-[95%] w-full space-y-6 p-6 lg:p-8">
+        <div className="mx-auto max-w-[1750px] xl:max-w-[95%] w-full space-y-3 p-4 lg:p-6 lg:pt-5">
           
           {/* Header Section */}
-          <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
+          <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-black tracking-tight text-slate-800">
+                <h1 className="text-xl font-black tracking-tight text-slate-800">
                   Orders
                 </h1>
               </div>
@@ -392,7 +392,7 @@ export function OrdersViewerPage() {
                         { id: "uploaded", label: "Uploaded", count: tabCounts.uploaded },
                         { id: "az_ordered", label: "AZ Ordered", count: tabCounts.az_ordered },
                         { id: "in_myus", label: "In MyUS", count: tabCounts.in_myus },
-                        { id: "completed", label: "Delivered", count: tabCounts.completed },
+                        { id: "completed", label: "Completed", count: tabCounts.completed },
                       ].find((t) => t.id === activeTab)?.label || "All Orders"
                     } 
                   </span>
@@ -411,7 +411,7 @@ export function OrdersViewerPage() {
                       { id: "uploaded", label: "Uploaded", count: tabCounts.uploaded },
                       { id: "az_ordered", label: "AZ Ordered", count: tabCounts.az_ordered },
                       { id: "in_myus", label: "In MyUS", count: tabCounts.in_myus },
-                      { id: "completed", label: "Delivered", count: tabCounts.completed },
+                      { id: "completed", label: "Completed", count: tabCounts.completed },
                     ].map((tab) => {
                       const isActive = activeTab === tab.id;
                       return (

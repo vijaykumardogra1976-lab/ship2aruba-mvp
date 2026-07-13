@@ -29,7 +29,7 @@ export function ClientOrderCard({ order, onClick }: Props) {
           </p>
         </div>
         <div className="text-right">
-          <div className="font-bold text-gray-900">{order.amount_usd} AWG</div>
+          <div className="font-bold text-gray-900">{order.amount_usd} USD</div>
           <div className="text-xs text-gray-500">{order.number_of_items} items</div>
         </div>
       </div>

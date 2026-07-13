@@ -228,7 +228,7 @@ export function OrderActionModals({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="amount_usd">Value of Items (AWG)</Label>
+              <Label htmlFor="amount_usd">Amazon Cost ($)</Label>
               <Input id="amount_usd" {...editForm.register("amount_usd")} />
               {editForm.formState.errors.amount_usd && (
                 <p className="text-sm text-red-500">

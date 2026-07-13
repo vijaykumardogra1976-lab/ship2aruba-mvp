@@ -387,7 +387,7 @@ def _recalculate_order_totals(order):
             invoice = order.invoice
             invoice.subtotal = order.items_total
             invoice.total = order.items_total
-            invoice.paid = order.payment_amount
+            invoice.paid = order.paid_amount
             invoice.remaining_balance = order.remaining_balance
             invoice.save(update_fields=["subtotal", "total", "paid", "remaining_balance", "updated_at"])
         return
@@ -402,7 +402,7 @@ def _recalculate_order_totals(order):
         invoice = order.invoice
         invoice.subtotal = order.items_total
         invoice.total = order.items_total
-        invoice.paid = order.payment_amount
+        invoice.paid = order.paid_amount
         invoice.remaining_balance = order.remaining_balance
         invoice.save(update_fields=["subtotal", "total", "paid", "remaining_balance", "updated_at"])
 

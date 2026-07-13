@@ -1,13 +1,12 @@
 import type { UseFormReturn } from "react-hook-form";
 import type { OrderFormData } from "../types";
-import { cn } from "@/lib/utils";
 import {
   paymentMethodLabel,
   paymentTypeLabel,
 } from "../utils/calculations";
 import {
-  Banknote,
   Calendar,
+  DollarSign,
   FileCheck2,
   FileText,
   Globe,
@@ -43,15 +42,15 @@ function PreviewRow({
 
 export function OrderPreview({ form }: OrderPreviewProps) {
   const v = form.getValues();
-  const computedItemsTotal = Number(v.items_total || 0);
-  const balanceAmount = Math.max(0, computedItemsTotal - Number(v.paid_amount || 0));
-  const remaining = Math.max(0, balanceAmount - Number(v.payment_amount || 0));
+  const computedItemsTotal = v.payment_type === "two"
+    ? Number(v.payment_amount || 0) * 2
+    : Number(v.payment_amount || 0);
+  const remaining = Math.max(0, computedItemsTotal - Number(v.paid_amount || 0));
 
   const formatCurrency = (val: string | number | undefined | null) => {
     if (val === undefined || val === null || val === "") return "0 AWG";
     const num = Number(val);
-    if (Number.isNaN(num)) return "0 AWG";
-    return Number.isInteger(num) ? `${num} AWG` : `${num.toFixed(2)} AWG`;
+    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -92,9 +91,9 @@ export function OrderPreview({ form }: OrderPreviewProps) {
             value={v.number_of_items !== "" ? `${v.number_of_items} Items` : "-"}
           />
           <PreviewRow
-            icon={Banknote}
-            label="Value of Items (AWG)"
-            value={v.amount_usd !== "" ? formatCurrency(v.amount_usd) : "-"}
+            icon={DollarSign}
+            label="Amount in USD"
+            value={v.amount_usd !== "" ? `${Math.round(Number(v.amount_usd))}` : "-"}
           />
         </div>
 
@@ -130,58 +129,75 @@ export function OrderPreview({ form }: OrderPreviewProps) {
         </div>
       </div>
 
-      {/* Right Panel: Order Summary */}
+      {/* Right Panel: Order Summary — Modern */}
       <div className="w-80 shrink-0 border-l border-slate-100 pl-4 flex flex-col justify-start space-y-3 lg:mt-[44px]">
-        <div className="rounded-xl border border-slate-200 bg-violet-50/10 p-3.5 space-y-2.5">
-          <div className="flex items-center gap-2">
-            <FileCheck2 className="h-4.5 w-4.5 text-violet-650" />
-            <span className="text-xs font-bold text-slate-900">Order Summary</span>
+        <div className="rounded-2xl overflow-hidden border border-violet-100 shadow-[0_4px_24px_rgba(124,58,237,0.10)]">
+
+          {/* Header */}
+          <div className="bg-gradient-to-br from-violet-600 to-violet-700 px-4 py-3 flex items-center gap-2.5">
+            <FileCheck2 className="h-4.5 w-4.5 text-violet-200 shrink-0" />
+            <span className="text-xs font-black text-white tracking-wide uppercase">Order Summary</span>
           </div>
 
-          <div className="space-y-2 text-xs text-slate-750 font-bold">
+          {/* Body */}
+          <div className="bg-white px-4 py-3.5 space-y-3">
+
             {/* Invoice Total */}
             <div className="flex items-center justify-between">
-              <span>Invoice Total</span>
-              <span className="text-slate-950 font-black">{formatCurrency(computedItemsTotal)}</span>
-            </div>
-            {/* Paid Amount */}
-            <div className="flex items-center justify-between">
-              <span>Paid Amount</span>
-              <span className="text-slate-950 font-black">{formatCurrency(v.paid_amount)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Invoice Total</span>
+              <span className="text-base font-black text-slate-900">{formatCurrency(computedItemsTotal)} <span className="text-[10px] font-semibold text-slate-400">AWG</span></span>
             </div>
 
-            {/* Balance Amount — only for Two Payments */}
+            {/* Per Installment */}
             {v.payment_type === "two" && (
-              <div className="flex items-center justify-between border-y border-slate-200/80 py-2">
-                <span>Balance Amount</span>
-                <span className="text-slate-950 font-black">{formatCurrency(balanceAmount)}</span>
+              <div className="flex items-center justify-between bg-violet-50/60 rounded-lg px-2.5 py-1.5">
+                <span className="text-[10px] font-bold text-violet-600 uppercase tracking-wider">Per Installment</span>
+                <span className="text-[11px] font-black text-violet-700">{formatCurrency(v.payment_amount)} <span className="text-[9px] font-semibold text-violet-400">AWG</span></span>
               </div>
             )}
-            {/* Payment Amount */}
-            <div className={cn("flex items-center justify-between text-violet-650", v.payment_type === "one" ? "border-t border-slate-200/80 pt-2" : "")}>
-              <span>Payment Amount</span>
-              <span className="text-sm font-extrabold">{formatCurrency(v.payment_amount)}</span>
-            </div>
-            {/* Balance Due */}
-            <div className="flex items-center justify-between">
-              <span>Balance Due</span>
-              <span className="text-slate-950 font-black">{formatCurrency(remaining)}</span>
-            </div>
-            {/* Divider: Payment Type & Method */}
-            <div className="border-t border-slate-200/80 pt-2 space-y-2">
+
+            <div className="border-t border-slate-100" />
+
+            {/* Paid Amount */}
+            {Number(v.paid_amount) > 0 && (
               <div className="flex items-center justify-between">
-                <span>Payment Type</span>
-                <span className="text-slate-950 font-black">
-                  {v.payment_type ? paymentTypeLabel(v.payment_type) : "-"}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Paid Amount</span>
+                <span className="text-sm font-black text-emerald-600">{formatCurrency(v.paid_amount)} <span className="text-[10px] font-semibold text-emerald-400">AWG</span></span>
+              </div>
+            )}
+
+            {/* Balance Due — highlighted */}
+            <div className={`rounded-xl px-3 py-2.5 flex items-center justify-between ${
+              Number(remaining) > 0
+                ? "bg-rose-50 border border-rose-100"
+                : "bg-emerald-50 border border-emerald-100"
+            }`}>
+              <span className={`text-[10px] font-black uppercase tracking-wider ${Number(remaining) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                Balance Due
+              </span>
+              <span className={`text-base font-black ${Number(remaining) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                {formatCurrency(remaining)} <span className="text-[10px] font-semibold opacity-70">AWG</span>
+              </span>
+            </div>
+
+            <div className="border-t border-slate-100" />
+
+            {/* Payment Type & Method — pill badges */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Payment Type</span>
+                <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-100 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-violet-700">
+                  {v.payment_type ? paymentTypeLabel(v.payment_type) : "—"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Payment Method</span>
-                <span className="text-slate-950 font-black">
-                  {v.payment_method ? paymentMethodLabel(v.payment_method) : "-"}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Payment Method</span>
+                <span className="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-700">
+                  {v.payment_method ? paymentMethodLabel(v.payment_method) : "—"}
                 </span>
               </div>
             </div>
+
           </div>
         </div>
       </div>

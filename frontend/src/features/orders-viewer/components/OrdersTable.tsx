@@ -1,5 +1,5 @@
-import { Calendar, Loader2, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { Calendar, Loader2 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import type { OrderListItem, OrderStatusField } from "../types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -73,7 +73,6 @@ export function OrdersTable({
 }: OrdersTableProps) {
   const showEmpty = !isLoading && orders.length === 0;
   const queryClient = useQueryClient();
-  const [openStatusOrderId, setOpenStatusOrderId] = useState<number | null>(null);
 
   // Status Change Mutation
   const statusMutation = useMutation({
@@ -85,56 +84,7 @@ export function OrdersTable({
     },
   });
 
-  const getActiveStatusValue = (order: OrderListItem) => {
-    if (order.is_completed) return "completed";
-    if (order.is_in_myus) return "in_myus";
-    if (order.is_uploaded) return "uploaded";
-    if (order.is_az_ordered) return "az_ordered";
-    return "az_ordered"; // Default to az_ordered if none are set
-  };
 
-  const getStatusBadge = (statusVal: string) => {
-    if (statusVal === "completed") {
-      return { label: "Delivered", classes: "bg-emerald-50 text-emerald-700 border-emerald-100" };
-    }
-    if (statusVal === "in_myus") {
-      return { label: "In MyUS", classes: "bg-blue-50 text-blue-700 border-blue-100" };
-    }
-    if (statusVal === "uploaded") {
-      return { label: "Uploaded", classes: "bg-teal-50 text-teal-700 border-teal-100" };
-    }
-    if (statusVal === "az_ordered") {
-      return { label: "AZ Ordered", classes: "bg-violet-50 text-violet-700 border-violet-100" };
-    }
-    return { label: "AZ Ordered", classes: "bg-violet-50 text-violet-700 border-violet-100" };
-  };
-
-  const handleStatusChange = (orderId: number, statusVal: string) => {
-    const payload: Partial<Record<OrderStatusField, boolean>> = {
-      is_az_ordered: false,
-      is_uploaded: false,
-      is_in_myus: false,
-      is_completed: false,
-    };
-
-    if (statusVal === "az_ordered") {
-      payload.is_az_ordered = true;
-    } else if (statusVal === "uploaded") {
-      payload.is_az_ordered = true;
-      payload.is_uploaded = true;
-    } else if (statusVal === "in_myus") {
-      payload.is_az_ordered = true;
-      payload.is_uploaded = true;
-      payload.is_in_myus = true;
-    } else if (statusVal === "completed") {
-      payload.is_az_ordered = true;
-      payload.is_uploaded = true;
-      payload.is_in_myus = true;
-      payload.is_completed = true;
-    }
-
-    statusMutation.mutate({ orderId, payload });
-  };
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white">
@@ -150,8 +100,9 @@ export function OrdersTable({
             <tr className="border-b border-slate-100 bg-slate-50/50">
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Order ID</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Customer</th>
-              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Date</th>
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Order</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Finances (AWG)</th>
+              <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Placed By</th>
               <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-550">Status</th>
             </tr>
           </thead>
@@ -159,14 +110,14 @@ export function OrdersTable({
             {isLoading ? (
               Array.from({ length: 5 }).map((_, idx) => (
                 <tr key={idx} className="animate-pulse">
-                  <td colSpan={5} className="px-5 py-6">
+                  <td colSpan={6} className="px-5 py-6">
                     <div className="h-5 rounded bg-slate-100 w-full" />
                   </td>
                 </tr>
               ))
             ) : showEmpty ? (
               <tr>
-                <td colSpan={5} className="px-5 py-12 text-center text-slate-550">
+                <td colSpan={6} className="px-5 py-12 text-center text-slate-550">
                   <p className="text-sm font-semibold">No orders found</p>
                   <p className="text-xs mt-1">Try adjusting your filters or search criteria.</p>
                 </td>
@@ -176,8 +127,6 @@ export function OrdersTable({
                 const isSelected = selectedOrderId === order.id;
                 const { date, time } = formatOrderDateAndTime(order.order_date);
                 const balanceVal = parseFloat(order.remaining_balance);
-                const currentStatus = getActiveStatusValue(order);
-                const statusInfo = getStatusBadge(currentStatus);
 
                 const idVal = order.order_number.split("-").pop() || "";
                 const displayId = idVal.slice(-4);
@@ -230,85 +179,103 @@ export function OrdersTable({
                       </div>
                     </td>
 
-                    {/* Date */}
+                    {/* Order (Date & Cost) */}
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                        <div>
-                          <p className="text-xs font-bold text-slate-700 leading-tight">{date}</p>
-                          {time && <p className="text-[10px] font-normal text-slate-550 mt-0.5">{time}</p>}
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                          <div>
+                            <p className="text-xs font-bold text-slate-700 leading-tight">{date}</p>
+                            {time && <p className="text-[10px] font-normal text-slate-550 mt-0.5">{time}</p>}
+                          </div>
                         </div>
+                        {order.amount_usd && parseFloat(order.amount_usd) > 0 && (
+                          <div className="flex items-center gap-1 mt-0.5 ml-5">
+                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Cost:</span>
+                            <span className="text-xs font-bold text-slate-700">${Math.round(parseFloat(order.amount_usd))}</span>
+                          </div>
+                        )}
                       </div>
                     </td>
 
                     {/* Combined Finances Column (AWG) - Vertically Stacked */}
-                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-700">
+                    <td className="px-5 py-3.5 text-xs">
                       <div className="flex flex-col gap-0.5">
                         <div>
-                          <span className="text-[9px] text-slate-500 font-normal mr-1 uppercase">Total:</span>
-                          <span className="font-bold text-slate-800">{formatCurrencyInt(order.items_total)}</span>
+                          <span className="text-[9px] text-slate-600 font-bold mr-1 uppercase">Total:</span>
+                          <span className="font-black text-slate-950">{formatCurrencyInt(order.items_total)}</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-slate-500 font-normal mr-1 uppercase">Paid:</span>
-                          <span className="font-bold text-emerald-600">{formatCurrencyInt(order.paid_amount)}</span>
+                          <span className="text-[9px] text-slate-600 font-bold mr-1 uppercase">Paid:</span>
+                          <span className="font-black text-emerald-700">{formatCurrencyInt(order.paid_amount)}</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-slate-500 font-normal mr-1 uppercase">Balance:</span>
-                          <span className={cn("font-bold", balanceVal > 0 ? "text-rose-500" : "text-emerald-600")}>
+                          <span className="text-[9px] text-slate-600 font-bold mr-1 uppercase">Balance:</span>
+                          <span className={cn("font-black", balanceVal > 0 ? "text-rose-600" : "text-emerald-700")}>
                             {formatCurrencyInt(order.remaining_balance)}
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    {/* Custom Styled Clickable Status Column Dropdown */}
-                    <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setOpenStatusOrderId(openStatusOrderId === order.id ? null : order.id)}
-                          disabled={statusMutation.isPending}
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-wider leading-none cursor-pointer hover:opacity-90 transition-all",
-                            currentStatus === "completed" && "bg-emerald-50 text-emerald-700 border-emerald-100",
-                            currentStatus === "in_myus" && "bg-blue-50 text-blue-700 border-blue-100",
-                            currentStatus === "uploaded" && "bg-teal-50 text-teal-700 border-teal-100",
-                            currentStatus === "az_ordered" && "bg-violet-50 text-violet-700 border-violet-100"
-                          )}
-                        >
-                          <span>{statusInfo.label}</span>
-                          <ChevronDown className="h-2.5 w-2.5 opacity-60" />
-                        </button>
+                    {/* Placed By */}
+                    <td className="px-5 py-3.5">
+                      {order.placed_by?.full_name ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-700">
+                            {order.placed_by.full_name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-xs font-bold text-slate-700">{order.placed_by.full_name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-medium text-slate-400">-</span>
+                      )}
+                    </td>
 
-                        {openStatusOrderId === order.id && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setOpenStatusOrderId(null)} />
-                            <div className="absolute left-0 mt-1 w-32 rounded-xl border border-slate-100 bg-white p-1 shadow-lg z-50 text-left">
-                              {[
-                                { val: "az_ordered", label: "AZ Ordered", classes: "hover:bg-violet-50 hover:text-violet-700" },
-                                { val: "uploaded", label: "Uploaded", classes: "hover:bg-teal-50 hover:text-teal-700" },
-                                { val: "in_myus", label: "In MyUS", classes: "hover:bg-blue-50 hover:text-blue-700" },
-                                { val: "completed", label: "Delivered", classes: "hover:bg-emerald-50 hover:text-emerald-700" },
-                              ].map((opt) => (
-                                <button
-                                  key={opt.val}
-                                  type="button"
-                                  onClick={() => {
-                                    setOpenStatusOrderId(null);
-                                    handleStatusChange(order.id, opt.val);
-                                  }}
-                                  className={cn(
-                                    "w-full px-2.5 py-1.5 text-left text-[9px] font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer text-slate-700",
-                                    opt.classes,
-                                    currentStatus === opt.val && "bg-slate-50 font-extrabold text-violet-750"
-                                  )}
-                                >
-                                  {opt.label}
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        )}
+                    {/* Status Column — 4 independent checkbox lines */}
+                    <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-col gap-0.5">
+                        {([
+                          { field: "is_az_ordered" as OrderStatusField, label: "AZ Ordered", color: "text-violet-600" },
+                          { field: "is_uploaded" as OrderStatusField, label: "Uploaded", color: "text-teal-600" },
+                          { field: "is_in_myus" as OrderStatusField, label: "In MyUS", color: "text-blue-600" },
+                          { field: "is_completed" as OrderStatusField, label: "Completed", color: "text-emerald-600" },
+                        ]).map(({ field, label, color }) => {
+                          const checked = order[field];
+                          return (
+                            <button
+                              key={field}
+                              type="button"
+                              disabled={statusMutation.isPending}
+                              onClick={() => {
+                                statusMutation.mutate({
+                                  orderId: order.id,
+                                  payload: { [field]: !checked },
+                                });
+                              }}
+                              className={cn(
+                                "flex items-center gap-1.5 rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider transition-colors w-full text-left cursor-pointer select-none",
+                                checked
+                                  ? `${color} bg-transparent`
+                                  : "text-slate-350 hover:text-slate-500"
+                              )}
+                            >
+                              {/* Checkbox icon */}
+                              {checked ? (
+                                <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <rect x="3" y="3" width="18" height="18" rx="4" className="fill-current opacity-10" />
+                                  <path d="M9 11.5l2 2 4.5-4.5" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+                                  <rect x="3" y="3" width="18" height="18" rx="4" />
+                                </svg>
+                              ) : (
+                                <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                  <rect x="3" y="3" width="18" height="18" rx="4" />
+                                </svg>
+                              )}
+                              <span>{label}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </td>
                   </tr>

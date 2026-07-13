@@ -300,7 +300,7 @@ export function ClientOrderDetailPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-black text-slate-800">AWG {formatMoney(order.items_total)}</p>
-                  <p className="text-[9px] font-normal text-slate-600 mt-0.5">AWG {formatMoney(order.amount_usd)}</p>
+                  <p className="text-[9px] font-normal text-slate-600 mt-0.5">${formatMoney(order.amount_usd)}</p>
                 </div>
               </div>
             )}

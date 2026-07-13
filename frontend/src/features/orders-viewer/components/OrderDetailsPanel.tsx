@@ -6,6 +6,7 @@ import {
   Package,
   Edit3,
   Loader2,
+  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OrderListItem } from "../types";
@@ -26,7 +27,7 @@ interface OrderDetailsPanelProps {
 
 function getStatusBadge(order: OrderListItem) {
   if (order.is_completed) {
-    return { label: "Delivered", classes: "bg-emerald-55/10 text-emerald-700 border-emerald-200" };
+    return { label: "Completed", classes: "bg-emerald-55/10 text-emerald-700 border-emerald-200" };
   }
   if (order.is_in_myus) {
     return { label: "In MyUS", classes: "bg-blue-55/10 text-blue-750 border-blue-200" };
@@ -87,7 +88,7 @@ export function OrderDetailsPanel({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-220px)] bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_rgb(0,0,0,0.02)] overflow-hidden">
+    <div className="flex flex-col max-h-[calc(100vh-220px)] bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_rgb(0,0,0,0.02)] overflow-hidden">
       {/* Panel Header */}
       <div className="flex items-center justify-between border-b border-slate-50 px-4.5 py-3 bg-slate-50/20">
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -115,8 +116,8 @@ export function OrderDetailsPanel({
         </div>
       </div>
 
-      {/* Panel Content (Scrolls independently so buttons are always visible) */}
-      <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 scrollbar-thin">
+      {/* Panel Content */}
+      <div className="overflow-y-auto p-3 space-y-3 scrollbar-thin">
         
         {/* Section: Items List (All items displayed, no internal scrolls) */}
         <div className="rounded-xl border border-slate-100 p-3 bg-white space-y-3 shadow-[0_2px_10px_rgba(0,0,0,0.005)]">
@@ -259,23 +260,16 @@ export function OrderDetailsPanel({
             </div>
           )}
 
-          {order.payment_type === "two" && balanceVal > 0 && (
-            <div className="pt-1.5 border-t border-slate-50 mt-1">
-              <button
-                onClick={onAddPayment}
-                className="text-[9px] font-black text-violet-650 hover:text-violet-750 transition-colors uppercase tracking-wider cursor-pointer"
-              >
-                Add New Payment
-              </button>
-            </div>
-          )}
         </div>
 
       </div>
 
       {/* Quick Actions Panel */}
-      <div className="border-t border-slate-100 bg-slate-50/20 p-4">
-        <div className="grid grid-cols-4 gap-2.5">
+      <div className="border-t border-slate-100 bg-slate-50/20 p-3">
+        <div className={cn(
+          "grid gap-2.5",
+          order.payment_type === "two" && balanceVal > 0 ? "grid-cols-5" : "grid-cols-4"
+        )}>
           {/* Edit */}
           <button
             onClick={onEdit}
@@ -311,6 +305,17 @@ export function OrderDetailsPanel({
             <FileText className="h-4.5 w-4.5" />
             <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">Receipt</span>
           </button>
+
+          {/* Add Payment — only for two-payment orders with remaining balance */}
+          {order.payment_type === "two" && balanceVal > 0 && (
+            <button
+              onClick={onAddPayment}
+              className="flex flex-col items-center justify-center rounded-xl p-2.5 text-xs font-bold text-amber-600 bg-gradient-to-b from-amber-50/80 to-amber-50/20 border border-amber-100/70 hover:border-amber-300 hover:from-amber-100/90 hover:to-amber-50/40 shadow-[0_4px_12px_rgba(217,119,6,0.04)] hover:shadow-[0_6px_18px_rgba(217,119,6,0.09)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+            >
+              <PlusCircle className="h-4.5 w-4.5" />
+              <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">Payment</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

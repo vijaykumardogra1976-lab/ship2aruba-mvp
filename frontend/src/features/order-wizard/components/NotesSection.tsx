@@ -50,8 +50,7 @@ export function NotesSection({ form }: NotesSectionProps) {
   const paymentMethod = watch("payment_method") || "";
   const orderDate = watch("order_date");
 
-  const balanceAmount = Math.max(0, Number(itemsTotal) - Number(paidAmount));
-  const balanceDue = Math.max(0, balanceAmount - Number(paymentAmount));
+  const balanceDue = Math.max(0, Number(itemsTotal) - Number(paidAmount));
 
   const handleNewClientClick = () => {
     setValue("is_new_client", !isNewClient, { shouldDirty: true });
@@ -64,8 +63,7 @@ export function NotesSection({ form }: NotesSectionProps) {
   const formatCurrency = (val: string | number | undefined | null) => {
     if (val === undefined || val === null || val === "") return "0 AWG";
     const num = Number(val);
-    if (Number.isNaN(num)) return "0 AWG";
-    return Number.isInteger(num) ? `${num} AWG` : `${num.toFixed(2)} AWG`;
+    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -207,58 +205,73 @@ export function NotesSection({ form }: NotesSectionProps) {
         </div>
       </div>
 
-      {/* Right Panel: Order Summary */}
+      {/* Right Panel: Order Summary — Modern */}
       <div className="w-80 shrink-0 border-l border-slate-100 pl-5 flex flex-col justify-center space-y-3.5">
         {/* Order Summary */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3.5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-900">Order Summary</span>
+        <div className="rounded-2xl overflow-hidden border border-violet-100 shadow-[0_4px_24px_rgba(124,58,237,0.10)]">
+
+          {/* Header */}
+          <div className="bg-gradient-to-br from-violet-600 to-violet-700 px-4 py-3 flex items-center gap-2.5">
+            <span className="text-xs font-black text-white tracking-wide uppercase">Order Summary</span>
           </div>
 
-          <div className="space-y-2.5 text-xs text-slate-700 font-semibold">
+          {/* Body */}
+          <div className="bg-white px-4 py-3.5 space-y-3">
+
             {/* Invoice Total */}
             <div className="flex items-center justify-between">
-              <span>Invoice Total</span>
-              <span className="text-slate-900 font-bold">{formatCurrency(itemsTotal)}</span>
-            </div>
-            {/* Paid Amount */}
-            <div className="flex items-center justify-between">
-              <span>Paid Amount</span>
-              <span className="text-slate-900 font-bold">{formatCurrency(paidAmount)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Invoice Total</span>
+              <span className="text-base font-black text-slate-900">{formatCurrency(itemsTotal)} <span className="text-[10px] font-semibold text-slate-400">AWG</span></span>
             </div>
 
-            {/* Balance Amount — only for Two Payments */}
+            {/* Per Installment */}
             {paymentType === "two" && (
-              <div className="flex items-center justify-between border-y border-slate-200/60 py-2.5">
-                <span>Balance Amount</span>
-                <span className="text-slate-900 font-bold">{formatCurrency(balanceAmount)}</span>
+              <div className="flex items-center justify-between bg-violet-50/60 rounded-lg px-2.5 py-1.5">
+                <span className="text-[10px] font-bold text-violet-600 uppercase tracking-wider">Per Installment</span>
+                <span className="text-[11px] font-black text-violet-700">{formatCurrency(paymentAmount)} <span className="text-[9px] font-semibold text-violet-400">AWG</span></span>
               </div>
             )}
-            {/* Payment Amount */}
-            <div className={cn("flex items-center justify-between text-violet-750", paymentType === "one" ? "border-t border-slate-200/60 pt-2.5" : "")}>
-              <span>Payment Amount</span>
-              <span className="text-violet-700 font-extrabold text-sm">{formatCurrency(paymentAmount)}</span>
-            </div>
-            {/* Balance Due */}
+
+            <div className="border-t border-slate-100" />
+
+            {/* Paid Amount */}
             <div className="flex items-center justify-between">
-              <span>Balance Due</span>
-              <span className="text-slate-900 font-bold">{formatCurrency(balanceDue)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Paid Amount</span>
+              <span className="text-sm font-black text-emerald-600">{formatCurrency(paidAmount)} <span className="text-[10px] font-semibold text-emerald-400">AWG</span></span>
             </div>
-            {/* Divider: Payment Type & Method */}
-            <div className="border-t border-slate-200/60 pt-2.5 space-y-2.5">
+
+            {/* Balance Due — highlighted */}
+            <div className={`rounded-xl px-3 py-2.5 flex items-center justify-between ${
+              Number(balanceDue) > 0
+                ? "bg-rose-50 border border-rose-100"
+                : "bg-emerald-50 border border-emerald-100"
+            }`}>
+              <span className={`text-[10px] font-black uppercase tracking-wider ${Number(balanceDue) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                Balance Due
+              </span>
+              <span className={`text-base font-black ${Number(balanceDue) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                {formatCurrency(balanceDue)} <span className="text-[10px] font-semibold opacity-70">AWG</span>
+              </span>
+            </div>
+
+            <div className="border-t border-slate-100" />
+
+            {/* Payment Type & Method — pill badges */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span>Payment Type</span>
-                <span className="text-slate-900 font-extrabold uppercase text-[10px]">
-                  {paymentType === "one" ? "One Payment" : paymentType === "two" ? "Two Payments" : "-"}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Payment Type</span>
+                <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-100 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-violet-700">
+                  {paymentType === "one" ? "One Payment" : paymentType === "two" ? "Two Payments" : "—"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Payment Method</span>
-                <span className="text-slate-900 font-extrabold uppercase text-[10px]">
-                  {paymentMethod ? methodLabels[paymentMethod as keyof typeof methodLabels] : "-"}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Payment Method</span>
+                <span className="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-700">
+                  {paymentMethod ? methodLabels[paymentMethod as keyof typeof methodLabels] : "—"}
                 </span>
               </div>
             </div>
+
           </div>
         </div>
 

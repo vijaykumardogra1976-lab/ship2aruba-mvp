@@ -64,7 +64,7 @@ function StatCard({
 }: StatCardProps) {
   return (
     <div className={cn(
-      "flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_4px_20px_rgb(0,0,0,0.01)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:-translate-y-0.5",
+      "flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_20px_rgb(0,0,0,0.01)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:-translate-y-0.5",
       borderColor
     )}>
       <div className="flex items-start justify-between">
@@ -78,7 +78,7 @@ function StatCard({
           <Icon className="h-4.5 w-4.5" />
         </div>
       </div>
-      <p className="mt-3 text-[10px] font-medium text-slate-550 uppercase tracking-wide">
+      <p className="mt-2.5 text-[10px] font-medium text-slate-550 uppercase tracking-wide">
         {subtitle}
       </p>
     </div>

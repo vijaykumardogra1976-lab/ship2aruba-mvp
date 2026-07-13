@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-
+const positiveNumber = z.coerce.number().positive();
 
 export const step1Schema = z.object({
   customer: z.object({
@@ -12,18 +12,18 @@ export const step1Schema = z.object({
 });
 
 export const step2Schema = z.object({
-  website_type: z.enum(["amazon", "ebay", "other"] as const, { message: "Please select a website to continue" }),
+  website_type: z.enum(["amazon", "ebay", "other"]),
   website: z.string().min(1, "Order website is required"),
   order_date: z.string().min(1, "Order date is required"),
-  number_of_items: z.coerce.number({ message: "Please enter number of items" }).int("Only whole numbers allowed").min(1, "Number of items must be at least 1"),
-  amount_usd: z.coerce.number({ message: "Please enter the value of items" }).int("Only whole numbers allowed").min(1, "Please enter the value of items"),
-  items_total: z.coerce.number({ message: "Please enter the total invoice amount" }).int("Only whole numbers allowed").min(1, "Please enter the total invoice amount"),
+  number_of_items: positiveNumber.refine((v) => v > 0, "Items must be greater than 0"),
+  amount_usd: positiveNumber.refine((v) => v > 0, "Amount must be greater than 0"),
 });
 
 export const step3Schema = z.object({
-  payment_type: z.enum(["one", "two"] as const, { message: "Please select a payment type to continue" }),
+  payment_type: z.enum(["one", "two"]),
   payment_amount: z.coerce.number().min(0),
-  paid_amount: z.coerce.number().int("Only whole numbers allowed").min(0),
+  items_total: positiveNumber,
+  paid_amount: z.coerce.number().min(0),
   payment_method: z.enum(["cash", "pin", "transfer"]),
 });
 
@@ -47,7 +47,7 @@ export type OrderFormValues = z.infer<typeof orderSchema>;
 
 export const STEP_FIELDS: Record<number, (keyof OrderFormValues)[]> = {
   1: ["customer"],
-  2: ["website_type", "website", "order_date", "number_of_items", "amount_usd", "items_total"],
-  3: ["payment_type", "payment_amount", "paid_amount", "payment_method"],
+  2: ["website_type", "website", "order_date", "number_of_items", "amount_usd"],
+  3: ["payment_type", "payment_amount", "items_total", "paid_amount", "payment_method"],
   4: ["is_new_client", "is_urgent", "internal_notes", "client_notes"],
 };

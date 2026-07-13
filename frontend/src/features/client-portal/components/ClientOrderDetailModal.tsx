@@ -110,8 +110,8 @@ export function ClientOrderDetailModal({ orderId, onClose }: Props) {
               <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Value of Items (AWG)</dt>
-                    <dd className="font-medium text-gray-900">{order.amount_usd} AWG</dd>
+                    <dt className="text-gray-500">Order Amount (USD)</dt>
+                    <dd className="font-medium text-gray-900">${order.amount_usd}</dd>
                   </div>
                   <div className="flex justify-between pt-2">
                     <dt className="text-gray-500">Total (AWG)</dt>
