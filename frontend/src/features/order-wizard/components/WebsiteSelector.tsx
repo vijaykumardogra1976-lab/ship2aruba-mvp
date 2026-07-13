@@ -56,7 +56,7 @@ const EBayLogo = () => (
 );
 
 export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelectorProps) {
-  const { register, setValue, watch, formState: { errors } } = form;
+  const { register, setValue, watch, clearErrors, formState: { errors } } = form;
   const websiteType = watch("website_type");
   const [dragActive, setDragActive] = useState(false);
 
@@ -70,6 +70,7 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
 
   const selectWebsite = (type: WebsiteType, website: string) => {
     setValue("website_type", type, { shouldValidate: true, shouldDirty: true });
+    clearErrors("website_type");
     setValue("website", type === "other" ? "" : website, {
       shouldValidate: true,
       shouldDirty: true,
@@ -120,6 +121,11 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
           <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
             From which website this order was ordered?
           </p>
+          {errors.website_type && (
+            <div className="rounded-xl border border-red-200 bg-red-50/50 px-3 py-2 text-xs font-bold text-red-700">
+              {errors.website_type.message}
+            </div>
+          )}
           <div className="grid gap-3 grid-cols-3">
             {WEBSITE_OPTIONS.map((opt) => {
               const isSelected = websiteType === opt.type;

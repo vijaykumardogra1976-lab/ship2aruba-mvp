@@ -12,7 +12,9 @@ export const step1Schema = z.object({
 });
 
 export const step2Schema = z.object({
-  website_type: z.enum(["amazon", "ebay", "other"]),
+  website_type: z.enum(["amazon", "ebay", "other"], {
+    message: "Please select a website to proceed.",
+  }),
   website: z.string().min(1, "Order website is required"),
   order_date: z.string().min(1, "Order date is required"),
   number_of_items: positiveNumber.refine((v) => v > 0, "Items must be greater than 0"),

@@ -119,6 +119,7 @@ export function OrderWizard() {
 
   const handleSelectCustomer = (c: Customer | null) => {
     form.setValue("customer", c, { shouldValidate: true, shouldDirty: true });
+    form.clearErrors("customer");
     form.setValue("new_customer_name", "");
     form.setValue("new_customer_phone", "");
     form.setValue("new_customer_email", "");
@@ -168,6 +169,12 @@ export function OrderWizard() {
 
         let hasError = false;
         form.clearErrors();
+
+        // If no customer is selected and no new customer details are entered
+        if (!newName && !newPhone && !newEmail) {
+          form.setError("customer", { message: "Please select a customer or create a new one to proceed." });
+          return;
+        }
 
         // 1. Validate Full Name
         if (!newName) {

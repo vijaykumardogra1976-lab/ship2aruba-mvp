@@ -26,7 +26,15 @@ export function useOrderWizard(form: UseFormReturn<OrderFormData>) {
     if (!result.success) {
       for (const issue of result.error.issues) {
         const field = issue.path[0] as keyof OrderFormData;
-        form.setError(field, { message: issue.message });
+        let message = issue.message;
+        if (field === "website_type") {
+          message = "Please select a website to proceed.";
+        } else if (field === "payment_type") {
+          message = "Please select a payment type to proceed.";
+        } else if (field === "payment_method") {
+          message = "Please select a payment method to proceed.";
+        }
+        form.setError(field, { message });
       }
       return false;
     }

@@ -145,14 +145,14 @@ export function OrderPreview({ form }: OrderPreviewProps) {
             {/* Invoice Total */}
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Invoice Total</span>
-              <span className="text-base font-black text-slate-900">{formatCurrency(computedItemsTotal)} <span className="text-[10px] font-semibold text-slate-400">AWG</span></span>
+              <span className="text-base font-black text-slate-900">{formatCurrency(computedItemsTotal)}</span>
             </div>
 
             {/* Per Installment */}
             {v.payment_type === "two" && (
               <div className="flex items-center justify-between bg-violet-50/60 rounded-lg px-2.5 py-1.5">
                 <span className="text-[10px] font-bold text-violet-600 uppercase tracking-wider">Per Installment</span>
-                <span className="text-[11px] font-black text-violet-700">{formatCurrency(v.payment_amount)} <span className="text-[9px] font-semibold text-violet-400">AWG</span></span>
+                <span className="text-[11px] font-black text-violet-700">{formatCurrency(v.payment_amount)}</span>
               </div>
             )}
 
@@ -162,7 +162,7 @@ export function OrderPreview({ form }: OrderPreviewProps) {
             {Number(v.paid_amount) > 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Paid Amount</span>
-                <span className="text-sm font-black text-emerald-600">{formatCurrency(v.paid_amount)} <span className="text-[10px] font-semibold text-emerald-400">AWG</span></span>
+                <span className="text-sm font-black text-emerald-600">{formatCurrency(v.paid_amount)}</span>
               </div>
             )}
 
@@ -176,7 +176,7 @@ export function OrderPreview({ form }: OrderPreviewProps) {
                 Balance Due
               </span>
               <span className={`text-base font-black ${Number(remaining) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
-                {formatCurrency(remaining)} <span className="text-[10px] font-semibold opacity-70">AWG</span>
+                {formatCurrency(remaining)}
               </span>
             </div>
 

@@ -528,12 +528,6 @@ export function CustomerSearch({ form, selected, onSelect }: CustomerSearchProps
           </div>
         )}
       </div>
-
-      {form.formState.errors.customer && (
-        <p className="text-[11px] text-red-500 font-bold pt-0.5">
-          {form.formState.errors.customer.message}
-        </p>
-      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ interface PaymentTypeSelectorProps {
 }
 
 export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
-  const { register, setValue, watch, formState: { errors } } = form;
+  const { register, setValue, watch, clearErrors, formState: { errors } } = form;
   const paymentType = watch("payment_type");
   const paymentAmount = watch("payment_amount");
   const paidAmount = watch("paid_amount");
@@ -65,6 +65,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
 
   const selectType = (type: PaymentType) => {
     setValue("payment_type", type, { shouldValidate: true, shouldDirty: true });
+    clearErrors("payment_type");
 
     // Recalculate items_total based on current payment_amount when switching type
     const amt = paymentAmount === "" ? 0 : Number(paymentAmount);
@@ -96,6 +97,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
 
   const selectMethod = (method: PaymentMethod) => {
     setValue("payment_method", method, { shouldValidate: true, shouldDirty: true });
+    clearErrors("payment_method");
   };
 
   const formatCurrency = (val: string | number) => {
@@ -187,7 +189,9 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             })}
           </div>
           {errors.payment_type && (
-            <p className="text-[10px] text-red-500 font-semibold">{errors.payment_type.message}</p>
+            <div className="rounded-xl border border-red-200 bg-red-50/50 px-3 py-2 text-xs font-bold text-red-700">
+              {errors.payment_type.message}
+            </div>
           )}
         </div>
 
@@ -274,6 +278,11 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
           <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
             Select the order payment method *
           </p>
+          {errors.payment_method && (
+            <div className="rounded-xl border border-red-200 bg-red-50/50 px-3 py-2 text-xs font-bold text-red-700">
+              {errors.payment_method.message}
+            </div>
+          )}
           <div className="grid gap-3 grid-cols-3">
             {PAYMENT_METHOD_OPTIONS.map((opt) => {
               const methodIcons = { cash: Banknote, pin: CreditCard, transfer: Landmark };
@@ -339,14 +348,14 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             {/* Invoice Total — hero row */}
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Invoice Total</span>
-              <span className="text-base font-black text-slate-900">{formatCurrency(computedItemsTotal)} <span className="text-[10px] font-semibold text-slate-400">AWG</span></span>
+              <span className="text-base font-black text-slate-900">{formatCurrency(computedItemsTotal)}</span>
             </div>
 
             {/* Per Installment — only for Two Payments */}
             {paymentType === "two" && (
               <div className="flex items-center justify-between bg-violet-50/60 rounded-lg px-2.5 py-1.5">
                 <span className="text-[10px] font-bold text-violet-600 uppercase tracking-wider">Per Installment</span>
-                <span className="text-[11px] font-black text-violet-700">{formatCurrency(paymentAmount)} <span className="text-[9px] font-semibold text-violet-400">AWG</span></span>
+                <span className="text-[11px] font-black text-violet-700">{formatCurrency(paymentAmount)}</span>
               </div>
             )}
 
@@ -355,7 +364,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
             {/* Paid Amount */}
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Paid Amount</span>
-              <span className="text-sm font-black text-emerald-600">{formatCurrency(paidAmount)} <span className="text-[10px] font-semibold text-emerald-400">AWG</span></span>
+              <span className="text-sm font-black text-emerald-600">{formatCurrency(paidAmount)}</span>
             </div>
 
             {/* Balance Due — highlighted */}
@@ -368,7 +377,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                 Balance Due
               </span>
               <span className={`text-base font-black ${Number(balanceDue) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
-                {formatCurrency(balanceDue)} <span className="text-[10px] font-semibold opacity-70">AWG</span>
+                {formatCurrency(balanceDue)}
               </span>
             </div>
 
