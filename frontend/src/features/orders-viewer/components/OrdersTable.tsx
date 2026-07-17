@@ -271,7 +271,7 @@ export function OrdersTable({
                                 });
                               }}
                               className={cn(
-                                "flex items-center gap-1.5 rounded-md p-0.5 text-xs font-semibold transition-colors text-left cursor-pointer select-none whitespace-nowrap",
+                                "flex items-center gap-2 rounded-md p-0.5 text-sm font-semibold transition-colors text-left cursor-pointer select-none whitespace-nowrap",
                                 checked
                                   ? `${color} bg-transparent`
                                   : "text-slate-650 hover:text-slate-900"
@@ -279,13 +279,13 @@ export function OrdersTable({
                             >
                               {/* Checkbox icon */}
                               {checked ? (
-                                <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                <svg className="h-9 w-9 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                                   <rect x="3" y="3" width="18" height="18" rx="4" className="fill-current opacity-10" />
                                   <path d="M9 11.5l2 2 4.5-4.5" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" />
                                   <rect x="3" y="3" width="18" height="18" rx="4" />
                                 </svg>
                               ) : (
-                                <svg className="h-7 w-7 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <svg className="h-9 w-9 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                   <rect x="3" y="3" width="18" height="18" rx="4" />
                                 </svg>
                               )}
