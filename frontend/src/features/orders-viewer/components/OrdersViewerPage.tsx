@@ -22,7 +22,7 @@ import {
 import { OrdersPagination } from "./OrdersPagination";
 import { OrdersStatsCards } from "./OrdersStatsCards";
 import { OrdersTable } from "./OrdersTable";
-import { OrderDetailsPanel } from "./OrderDetailsPanel";
+
 import type { OrderListItem } from "../types";
 import {
   Dialog,
@@ -100,21 +100,22 @@ export function OrdersViewerPage() {
     return tabFilteredOrders.slice(start, start + pageSize);
   }, [tabFilteredOrders, page, pageSize]);
 
-  // Automatically select the first order when the filtered list loads or changes
+  // Only sync selection: deselect if order is no longer in list, or auto-select if explicitly requested via navigation state
   useEffect(() => {
-    if (!isLoading && tabFilteredOrders.length > 0) {
-      const isStillInList = tabFilteredOrders.some((o) => o.id === selectedOrder?.id);
-      const forceSelectLatest = location.state?.selectLatest;
+    if (isLoading) return;
 
-      if (!selectedOrder || !isStillInList || forceSelectLatest) {
-        setSelectedOrder(tabFilteredOrders[0]);
-        if (forceSelectLatest && !isFetching) {
-          navigate(location.pathname, { replace: true, state: {} });
-        }
-      }
-    } else if (!isLoading && tabFilteredOrders.length === 0) {
+    const isStillInList = tabFilteredOrders.some((o) => o.id === selectedOrder?.id);
+    const forceSelectLatest = location.state?.selectLatest;
+
+    if (forceSelectLatest && !isFetching) {
+      // Navigation explicitly asked us to select the most recently created order
+      setSelectedOrder(tabFilteredOrders[0] ?? null);
+      navigate(location.pathname, { replace: true, state: {} });
+    } else if (selectedOrder && !isStillInList) {
+      // Selected order is no longer in the visible list (e.g. filter changed) → deselect
       setSelectedOrder(null);
     }
+    // Do NOT auto-select first row by default
   }, [tabFilteredOrders, isLoading, isFetching, selectedOrder, location.state, navigate, location.pathname]);
 
   // Tab counts based on all orders loaded matching search/date
@@ -462,16 +463,20 @@ export function OrdersViewerPage() {
             </div>
           )}
 
-          {/* Split Screen Layout Container */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left side: Orders Table */}
-            <div className={selectedOrder ? "lg:col-span-8 space-y-4" : "lg:col-span-12 space-y-4"}>
+          {/* Main Layout Container */}
+          <div className="space-y-4">
+            <div className="w-full">
               <OrdersTable
                 orders={paginatedOrders}
                 isLoading={showTableLoading}
                 isRefreshing={isFetching && !isLoading}
                 selectedOrderId={selectedOrder?.id}
                 onSelectOrder={setSelectedOrder}
+                onEditOrder={(order) => openAction("edit", order)}
+                onDeleteOrder={(order) => openAction("delete", order)}
+                onUploadPdf={(order) => openAction("upload", order)}
+                onAddPayment={(order) => openAction("payment", order)}
+                onPrintReceipt={(order) => handlePrintReceipt(order)}
               />
 
               {!showTableLoading && totalCount > 0 && (
@@ -484,21 +489,6 @@ export function OrdersViewerPage() {
                 />
               )}
             </div>
-
-            {/* Right side: Detail Panel (Active only when order is selected) */}
-            {selectedOrder && (
-              <div className="lg:col-span-4 sticky top-6">
-                <OrderDetailsPanel
-                  order={selectedOrder}
-                  onClose={() => setSelectedOrder(null)}
-                  onEdit={() => openAction("edit", selectedOrder)}
-                  onDelete={() => openAction("delete", selectedOrder)}
-                  onUploadPdf={() => openAction("upload", selectedOrder)}
-                  onAddPayment={() => openAction("payment", selectedOrder)}
-                  onPrintReceipt={() => handlePrintReceipt(selectedOrder)}
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>

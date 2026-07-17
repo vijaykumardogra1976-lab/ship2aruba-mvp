@@ -35,8 +35,14 @@ const PAYMENT_METHODS = [
 ] as const;
 
 const editOrderSchema = z.object({
-  items_total: z.string().min(1, "Items total is required"),
-  amount_usd: z.string().min(1, "Amazon cost is required"),
+  items_total: z
+    .string()
+    .min(1, "Items total is required")
+    .regex(/^\d+$/, "Only positive integers are allowed (no alphabets, decimals, or symbols)"),
+  amount_usd: z
+    .string()
+    .min(1, "Amazon cost is required")
+    .regex(/^\d+$/, "Only positive integers are allowed (no alphabets, decimals, or symbols)"),
   order_date: z.string().min(1, "Order date is required"),
   authorization_password: z.string().min(1, "Authorization password is required"),
 });
@@ -220,7 +226,15 @@ export function OrderActionModals({
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="items_total">Items Total (AWG)</Label>
-              <Input id="items_total" {...editForm.register("items_total")} />
+              <Input
+                id="items_total"
+                {...editForm.register("items_total")}
+                onKeyPress={(e) => {
+                  if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+              />
               {editForm.formState.errors.items_total && (
                 <p className="text-sm text-red-500">
                   {editForm.formState.errors.items_total.message}
@@ -229,7 +243,15 @@ export function OrderActionModals({
             </div>
             <div className="space-y-2">
               <Label htmlFor="amount_usd">Amazon Cost ($)</Label>
-              <Input id="amount_usd" {...editForm.register("amount_usd")} />
+              <Input
+                id="amount_usd"
+                {...editForm.register("amount_usd")}
+                onKeyPress={(e) => {
+                  if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+              />
               {editForm.formState.errors.amount_usd && (
                 <p className="text-sm text-red-500">
                   {editForm.formState.errors.amount_usd.message}

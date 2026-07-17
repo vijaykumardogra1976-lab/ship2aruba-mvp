@@ -418,16 +418,14 @@ class OrderItemListView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         from decimal import Decimal
-        from apps.orders.services.pdf_parser import PDFInvoiceParserService
 
         order = get_object_or_404(Order, pk=self.kwargs["pk"])
         qty = serializer.validated_data.get("quantity", 1)
         unit_p = serializer.validated_data.get("unit_price", Decimal("0.00"))
         line_total = serializer.validated_data.get("line_total", unit_p * qty)
 
-        image_url = serializer.validated_data.get("image_url", "")
-        if not image_url:
-            image_url = PDFInvoiceParserService.get_image_for_label(serializer.validated_data.get("label", ""))
+        # Only use the image_url the user explicitly provided — no auto-fetch
+        image_url = serializer.validated_data.get("image_url", "") or ""
 
         item = serializer.save(order=order, line_total=line_total, image_url=image_url)
         _recalculate_order_totals(order)

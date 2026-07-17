@@ -6,13 +6,11 @@ import {
   Package,
   Edit3,
   Loader2,
-  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OrderListItem } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { getOrderItems } from "../api/ordersViewerApi";
 
 interface OrderDetailsPanelProps {
@@ -60,7 +58,6 @@ export function OrderDetailsPanel({
   onPrintReceipt,
 }: OrderDetailsPanelProps) {
   const navigate = useNavigate();
-  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   if (!order) return null;
 
@@ -78,245 +75,197 @@ export function OrderDetailsPanel({
     .filter(Boolean)
     .join("\n\n");
 
-  const getImageUrl = (item: any) => {
-    if (item.product_image) {
-      return item.product_image.startsWith("http")
-        ? item.product_image
-        : `${import.meta.env.VITE_API_BASE_URL || ""}${item.product_image}`;
+  // Compute partial payment state for the badge
+  const isPartiallyPaid = balanceVal > 0 && parseFloat(order.paid_amount) > 0;
+  
+  let customStatus = statusInfo;
+  if (!customStatus) {
+    if (isPartiallyPaid) {
+      customStatus = { label: "Partially Paid", classes: "bg-emerald-50 text-emerald-600" };
+    } else {
+      customStatus = { label: "Unpaid", classes: "bg-slate-100 text-slate-600" };
     }
-    return item.image_url;
-  };
+  }
 
   return (
-    <div className="flex flex-col max-h-[calc(100vh-220px)] bg-white border border-slate-100 rounded-2xl shadow-[0_4px_25px_rgb(0,0,0,0.02)] overflow-hidden">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between border-b border-slate-50 px-4.5 py-3 bg-slate-50/20">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <h2 className="text-xs font-black text-slate-800 tracking-tight mr-0.5">
-            Order #{order.order_number.split("-").pop()?.slice(-4)}
-          </h2>
-          {statusInfo && (
-            <span className={cn(
-              "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none",
-              statusInfo.classes
-            )}>
-              {statusInfo.label}
-            </span>
-          )}
-          {order.is_urgent && (
-            <span className="inline-flex items-center rounded-full bg-rose-50 border border-rose-100 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none text-rose-600">
-              Urgent
-            </span>
-          )}
-          {order.is_new_client && (
-            <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-100 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider leading-none text-violet-650">
-              New Client
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Panel Content */}
-      <div className="overflow-y-auto p-3 space-y-3 scrollbar-thin">
+    <div className="flex flex-col w-full bg-white rounded-b-xl">
+      {/* 4-column Grid Layout */}
+      <div className="grid grid-cols-4 gap-8 px-8 py-7">
         
-        {/* Section: Items List (All items displayed, no internal scrolls) */}
-        <div className="rounded-xl border border-slate-100 p-3 bg-white space-y-3 shadow-[0_2px_10px_rgba(0,0,0,0.005)]">
-          <div className="flex items-center justify-between border-b border-slate-50 pb-2">
-            <h4 className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-              <Package className="h-3.5 w-3.5 text-slate-500" />
+        {/* Column 1: Order Summary */}
+        <div className="space-y-5">
+          <h4 className="flex items-center gap-2 font-bold text-slate-800 text-base border-b border-slate-100 pb-3">
+            <Package className="h-5 w-5 text-slate-600" />
+            Order Summary
+          </h4>
+          
+          <div className="grid grid-cols-[130px_1fr] gap-y-4 text-sm items-center">
+            <span className="text-slate-500 font-medium">Order Date</span>
+            <span className="font-bold text-slate-800">
+              {new Date(order.order_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </span>
+            
+            <span className="text-slate-500 font-medium">Order Number</span>
+            <span className="font-bold text-slate-800">#{order.order_number}</span>
+            
+            <span className="text-slate-500 font-medium">Items Count</span>
+            <span className="font-bold text-slate-800">{order.number_of_items} {order.number_of_items === 1 ? 'item' : 'items'}</span>
+            
+            <span className="text-slate-500 font-medium">Payment Status</span>
+            <div>
+               <span className={cn("inline-flex items-center rounded-md px-3 py-1.5 text-xs font-bold", customStatus.classes)}>
+                  {customStatus.label}
+               </span>
+            </div>
+
+            <span className="text-slate-500 font-medium">Payment Method</span>
+            <span className="font-bold text-slate-800">{order.payment_type === "two" ? "Two Payments" : "Full Payment"}</span>
+
+            <span className="text-slate-500 font-medium">Placed By</span>
+            <span className="font-bold text-slate-800">{order.placed_by?.full_name || "-"}</span>
+          </div>
+        </div>
+
+        {/* Column 2: Payment Details (AWG) */}
+        <div className="space-y-5">
+          <h4 className="flex items-center gap-2 font-bold text-slate-800 text-base border-b border-slate-100 pb-3">
+            <FileText className="h-5 w-5 text-slate-600" />
+            Payment Details (AWG)
+          </h4>
+
+          <div className="grid grid-cols-[140px_1fr] gap-y-4 text-sm items-center">
+            <span className="text-slate-500 font-medium">Order Total</span>
+            <span className="font-bold text-slate-800 text-base">{formatCurrencyInt(order.items_total, "AWG")}</span>
+
+            <span className="text-slate-500 font-medium">Amount Paid</span>
+            <span className="font-bold text-emerald-600 text-base">{formatCurrencyInt(order.paid_amount, "AWG")}</span>
+
+            <span className="text-slate-500 font-medium">Amount Due</span>
+            <span className="font-bold text-rose-600 text-base">{formatCurrencyInt(order.remaining_balance, "AWG")}</span>
+
+            <span className="text-slate-500 font-medium">Payment Type</span>
+            <span className="font-bold text-slate-800">{order.payment_type === "two" ? "Two Payments" : "Full Payment"}</span>
+
+            <span className="text-slate-500 font-medium">Payment Method</span>
+            <span className="font-bold text-slate-800">By {order.payment_method_display || order.payment_method}</span>
+
+            <span className="text-slate-500 font-medium">Installment Amount</span>
+            <span className="font-bold text-slate-800">
+              {order.payment_type === "two" ? formatCurrencyInt(order.payment_amount, "AWG") : "-"}
+            </span>
+          </div>
+        </div>
+
+        {/* Column 3: Items List */}
+        <div className="space-y-5 border-l border-slate-100 pl-8">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h4 className="flex items-center gap-2 font-bold text-slate-800 text-base">
+              <Package className="h-5 w-5 text-slate-600" />
               Items List
             </h4>
             <button
               onClick={() => navigate(`/orders/${order.id}/items`)}
-              className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-2.5 text-[9px] font-black uppercase tracking-wider text-violet-700 hover:bg-violet-50 transition cursor-pointer"
-              title="Manage Items"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-violet-200 bg-white px-3.5 text-sm font-bold text-violet-700 hover:bg-violet-50 transition cursor-pointer"
             >
-              <Edit3 className="h-2.5 w-2.5" />
+              <Edit3 className="h-4 w-4" />
               <span>Edit Items</span>
             </button>
           </div>
 
-          {itemsLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-4.5 w-4.5 animate-spin text-violet-600" />
-            </div>
-          ) : items.length === 0 ? (
-            <p className="text-[10px] text-slate-550 italic py-1">No items found. Upload a PDF invoice to extract items.</p>
-          ) : (
-            <div className="space-y-3">
-              {items.map((item) => {
-                const hasError = imageErrors[item.id];
-                const imgUrl = !hasError ? getImageUrl(item) : null;
-                return (
-                  <div key={item.id} className="flex items-center justify-between text-xs gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {imgUrl ? (
-                        <img
-                          src={imgUrl}
-                          alt="Product"
-                          className="h-8.5 w-8.5 rounded-lg object-cover border border-slate-100 bg-slate-50 shrink-0 shadow-inner"
-                          onError={() => {
-                            setImageErrors((prev) => ({ ...prev, [item.id]: true }));
-                          }}
-                        />
-                      ) : (
-                        <div className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
-                          <Package className="h-3.5 w-3.5 text-slate-400" />
+          <div className="text-sm text-slate-500">
+             {itemsLoading ? (
+                <div className="flex items-center gap-2 text-violet-600"><Loader2 className="h-5 w-5 animate-spin"/> Loading items...</div>
+             ) : items.length === 0 ? (
+                <div className="space-y-2 mt-2">
+                  <p>No items found.</p>
+                  <p className="text-slate-400">Upload a PDF invoice to extract items.</p>
+                </div>
+             ) : (
+                <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 scrollbar-thin mt-2">
+                   {items.map(item => {
+                      const rawImg = item.product_image || item.image_url;
+                      return (
+                        <div key={item.id} className="flex items-center gap-3">
+                          {rawImg ? (
+                            <img
+                              src={rawImg.startsWith("http") ? rawImg : `${import.meta.env.VITE_API_BASE_URL || ""}${rawImg}`}
+                              alt=""
+                              className="h-10 w-10 shrink-0 rounded-lg object-cover bg-slate-100 border border-slate-200"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
+                              <Package className="h-5 w-5 text-slate-400" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0 flex justify-between items-center gap-2">
+                            <span className="truncate font-medium text-sm text-slate-700">{item.label} <span className="text-slate-400 text-xs">(x{item.quantity})</span></span>
+                            <span className="font-bold text-slate-700 shrink-0 text-sm">{formatCurrencyInt(item.unit_price)}</span>
+                          </div>
                         </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-bold text-slate-800 truncate text-[11px] leading-tight" title={item.label}>
-                          {item.label}
-                        </p>
-                        <p className="text-[9px] text-slate-500 font-semibold mt-0.5 leading-none">
-                          Qty: x{item.quantity}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-bold text-slate-750 shrink-0 text-[11px]">
-                      {formatCurrencyInt(item.unit_price)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Section: Order Details (Only Order metadata) */}
-        <div className="rounded-xl border border-slate-100 p-3 space-y-2.5 bg-white text-xs shadow-[0_2px_10px_rgba(0,0,0,0.005)]">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Order Date</span>
-            <span className="font-bold text-slate-700">
-              {new Date(order.order_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Order Number</span>
-            <span className="font-mono font-bold text-slate-755">#{order.order_number}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Items Count</span>
-            <span className="font-bold text-slate-700">{order.number_of_items} {order.number_of_items === 1 ? 'item' : 'items'}</span>
+                      );
+                   })}
+                </div>
+             )}
           </div>
         </div>
 
-        {/* Section: Notes (Moved above Payment Details) */}
-        <div className="rounded-xl border border-slate-100 p-3 bg-white space-y-2 text-xs shadow-[0_2px_10px_rgba(0,0,0,0.005)]">
-          <h4 className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5 border-b border-slate-50 pb-1.5">
-            <FileText className="h-3.5 w-3.5 text-slate-500" />
+        {/* Column 4: Notes */}
+        <div className="space-y-5 border-l border-slate-100 pl-8">
+          <h4 className="flex items-center gap-2 font-bold text-slate-800 text-base border-b border-slate-100 pb-3">
+            <FileText className="h-5 w-5 text-slate-600" />
             Notes
           </h4>
-          {notes ? (
-            <p className="text-slate-750 font-bold whitespace-pre-wrap leading-relaxed text-[11px]">{notes}</p>
-          ) : (
-            <p className="text-slate-500 italic text-[11px]">No notes available.</p>
-          )}
+          <div className="text-sm text-slate-500 mt-2">
+             {notes ? (
+                <p className="whitespace-pre-wrap leading-relaxed">{notes}</p>
+             ) : (
+                <p className="italic text-slate-400">No notes available.</p>
+             )}
+          </div>
         </div>
-
-        {/* Section: Payment Details (Static, no collapse, holds all financial amounts) */}
-        <div className="rounded-xl border border-slate-100 p-3 bg-white space-y-2.5 text-xs shadow-[0_2px_10px_rgba(0,0,0,0.005)]">
-          <h4 className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5 border-b border-slate-50 pb-1.5">
-            <FileText className="h-3.5 w-3.5 text-slate-500" />
-            Payment Details
-          </h4>
-          <div className="flex justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Order Total</span>
-            <span className="font-black text-slate-800">{formatCurrencyInt(order.items_total)}</span>
-          </div>
-
-          <div className="h-px bg-slate-50 my-1" />
-
-          <div className="flex justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Payment Type</span>
-            <span className="font-bold text-slate-700">{order.payment_type_display || order.payment_type}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Payment Method</span>
-            <span className="font-bold text-slate-700">By {order.payment_method_display || order.payment_method}</span>
-          </div>
-
-          {order.payment_type === "two" && parseFloat(order.payment_amount) > 0 && (
-            <div className="flex justify-between">
-              <span className="text-[10px] font-semibold uppercase text-slate-600">Installment Amount</span>
-              <span className="font-bold text-slate-700">{formatCurrencyInt(order.payment_amount)}</span>
-            </div>
-          )}
-
-          <div className="h-px bg-slate-50 my-1" />
-
-          <div className="flex justify-between">
-            <span className="text-[10px] font-semibold uppercase text-slate-600">Amount Paid</span>
-            <span className="font-bold text-emerald-600">{formatCurrencyInt(order.paid_amount)}</span>
-          </div>
-
-          {(order.payment_type === "two" || balanceVal > 0) && (
-            <div className="flex justify-between">
-              <span className="text-[10px] font-semibold uppercase text-slate-600">Amount Due</span>
-              <span className={cn("font-black", balanceVal > 0 ? "text-rose-500" : "text-emerald-600")}>
-                {formatCurrencyInt(order.remaining_balance)}
-              </span>
-            </div>
-          )}
-
-        </div>
-
       </div>
 
-      {/* Quick Actions Panel */}
-      <div className="border-t border-slate-100 bg-slate-50/20 p-3">
-        <div className={cn(
-          "grid gap-2.5",
-          order.payment_type === "two" && balanceVal > 0 ? "grid-cols-5" : "grid-cols-4"
-        )}>
-          {/* Edit */}
+      {/* Action Buttons Row */}
+      <div className="flex justify-end gap-4 px-8 py-5 border-t border-slate-100 bg-slate-50/30">
+        <button
+          onClick={onEdit}
+          className="flex items-center gap-2.5 rounded-xl px-6 py-2.5 text-sm font-bold text-white bg-violet-600 hover:bg-violet-700 transition shadow-sm"
+        >
+          <Edit className="h-4.5 w-4.5" />
+          Edit
+        </button>
+        <button
+          onClick={onDelete}
+          className="flex items-center gap-2.5 rounded-xl px-6 py-2.5 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition shadow-sm"
+        >
+          <Trash2 className="h-4.5 w-4.5" />
+          Delete
+        </button>
+        <button
+          onClick={onUploadPdf}
+          className="flex items-center gap-2.5 rounded-xl px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm"
+        >
+          <Upload className="h-4.5 w-4.5" />
+          Upload PDF
+        </button>
+        <button
+          onClick={onPrintReceipt}
+          className="flex items-center gap-2.5 rounded-xl px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm"
+        >
+          <FileText className="h-4.5 w-4.5" />
+          Receipt
+        </button>
+        {/* Payment button */}
+        {balanceVal > 0 && (
           <button
-            onClick={onEdit}
-            className="flex flex-col items-center justify-center rounded-xl p-2.5 text-xs font-bold text-violet-700 bg-gradient-to-b from-violet-50/80 to-violet-50/20 border border-violet-100/70 hover:border-violet-300 hover:from-violet-100/90 hover:to-violet-50/40 shadow-[0_4px_12px_rgba(124,58,237,0.04)] hover:shadow-[0_6px_18px_rgba(124,58,237,0.09)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+            onClick={onAddPayment}
+            className="flex items-center gap-2.5 rounded-xl px-6 py-2.5 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 transition shadow-sm"
           >
-            <Edit className="h-4.5 w-4.5" />
-            <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">Edit</span>
+            <Package className="h-4.5 w-4.5" />
+            Add Payment
           </button>
-
-          {/* Delete */}
-          <button
-            onClick={onDelete}
-            className="flex flex-col items-center justify-center rounded-xl p-2.5 text-xs font-bold text-rose-600 bg-gradient-to-b from-rose-50/80 to-rose-50/20 border border-rose-100/70 hover:border-rose-300 hover:from-rose-100/90 hover:to-rose-50/40 shadow-[0_4px_12px_rgba(225,29,72,0.04)] hover:shadow-[0_6px_18px_rgba(225,29,72,0.09)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
-          >
-            <Trash2 className="h-4.5 w-4.5" />
-            <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">Delete</span>
-          </button>
-
-          {/* Upload */}
-          <button
-            onClick={onUploadPdf}
-            className="flex flex-col items-center justify-center rounded-xl p-2.5 text-xs font-bold text-emerald-600 bg-gradient-to-b from-emerald-50/80 to-emerald-50/20 border border-emerald-100/70 hover:border-emerald-300 hover:from-emerald-100/90 hover:to-emerald-50/40 shadow-[0_4px_12px_rgba(5,150,105,0.04)] hover:shadow-[0_6px_18px_rgba(5,150,105,0.09)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
-          >
-            <Upload className="h-4.5 w-4.5" />
-            <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">Upload</span>
-          </button>
-
-          {/* Receipt */}
-          <button
-            onClick={onPrintReceipt}
-            className="flex flex-col items-center justify-center rounded-xl p-2.5 text-xs font-bold text-blue-600 bg-gradient-to-b from-blue-50/80 to-blue-50/20 border border-blue-100/70 hover:border-blue-300 hover:from-blue-100/90 hover:to-blue-50/40 shadow-[0_4px_12px_rgba(37,99,235,0.04)] hover:shadow-[0_6px_18px_rgba(37,99,235,0.09)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
-          >
-            <FileText className="h-4.5 w-4.5" />
-            <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">Receipt</span>
-          </button>
-
-          {/* Add Payment — only for two-payment orders with remaining balance */}
-          {order.payment_type === "two" && balanceVal > 0 && (
-            <button
-              onClick={onAddPayment}
-              className="flex flex-col items-center justify-center rounded-xl p-2.5 text-xs font-bold text-amber-600 bg-gradient-to-b from-amber-50/80 to-amber-50/20 border border-amber-100/70 hover:border-amber-300 hover:from-amber-100/90 hover:to-amber-50/40 shadow-[0_4px_12px_rgba(217,119,6,0.04)] hover:shadow-[0_6px_18px_rgba(217,119,6,0.09)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
-            >
-              <PlusCircle className="h-4.5 w-4.5" />
-              <span className="text-[9px] font-black mt-1.5 uppercase tracking-wider">Payment</span>
-            </button>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

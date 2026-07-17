@@ -32,6 +32,7 @@ export function ItemsControlPanel() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [uploading, setUploading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
 
   // States for Create/Edit Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -82,6 +83,14 @@ export function ItemsControlPanel() {
       setModalOpen(false);
       resetForm();
     },
+    onError: (err: any) => {
+      const detail =
+        err?.response?.data?.detail ||
+        err?.response?.data?.non_field_errors?.[0] ||
+        Object.values(err?.response?.data ?? {}).flat().join(" ") ||
+        "Failed to save item. Please check your inputs and try again.";
+      setSaveMutationError(String(detail));
+    },
   });
 
   // Mutate delete
@@ -90,6 +99,7 @@ export function ItemsControlPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.items(id) });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setDeletingItemId(null);
     },
   });
 
@@ -129,6 +139,9 @@ export function ItemsControlPanel() {
     },
   });
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [saveMutationError, setSaveMutationError] = useState<string | null>(null);
+
   const resetForm = () => {
     setEditingItem(null);
     setFormLabel("");
@@ -141,10 +154,13 @@ export function ItemsControlPanel() {
     setFormAccountUsed("");
     setFormEstDate("");
     setFormImageUrl("");
+    setFormErrors({});
+    setSaveMutationError(null);
   };
 
   const handleOpenCreate = () => {
     resetForm();
+    setModalTab("manual");
     setModalOpen(true);
   };
 
@@ -160,17 +176,40 @@ export function ItemsControlPanel() {
     setFormAccountUsed(item.account_used || "");
     setFormEstDate(item.est_date || "");
     setFormImageUrl(item.image_url || "");
+    setFormErrors({});
+    setSaveMutationError(null);
     setModalOpen(true);
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    if (!formLabel.trim()) {
+      errors.label = "Item description is required.";
+    }
+    if (!formQuantity || formQuantity < 1) {
+      errors.quantity = "Quantity must be at least 1.";
+    }
+    if (formUnitPrice === "" || isNaN(Number(formUnitPrice)) || Number(formUnitPrice) < 0) {
+      errors.unit_price = "A valid price is required (can be 0).";
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSaveSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formLabel.trim()) return;
+    setSaveMutationError(null);
+
+    if (!validateForm()) return;
+
+    const qty = Number(formQuantity);
+    const price = Number(formUnitPrice);
 
     saveMutation.mutate({
       label: formLabel.trim(),
-      quantity: Number(formQuantity),
-      unit_price: formUnitPrice ? String(Number(formUnitPrice)) : "0.00",
+      quantity: qty,
+      unit_price: price.toFixed(2),
+      line_total: (qty * price).toFixed(2),
       fedex_tracking_number: formFedexTracking.trim(),
       tracking_number: formAzTracking.trim(),
       address: formAddress.trim(),
@@ -293,19 +332,19 @@ export function ItemsControlPanel() {
         <div className="rounded-2xl border border-slate-200 bg-white shadow-xs min-w-max w-full overflow-hidden">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
-                <th className="py-3 px-4 w-16 text-center">ID</th>
-                <th className="py-3 px-4 w-96">Product Details</th>
-                <th className="py-3 px-4 w-40 text-center">Status & Actions</th>
-                <th className="py-3 px-4 w-32">Est. Date</th>
-                <th className="py-3 px-4 w-40">Tracking (FedEx / AZ)</th>
-                <th className="py-3 px-4 w-32">Address</th>
-                <th className="py-3 px-4 w-44">Notes</th>
-                <th className="py-3 px-4 w-32">Account Used</th>
-                <th className="py-3 px-4 w-20 text-center">Actions</th>
+              <tr className="border-b border-slate-100 bg-slate-50/50 text-xs font-bold uppercase tracking-wider text-slate-600">
+                <th className="py-4 px-5 w-16 text-center">ID</th>
+                <th className="py-4 px-5 w-96">Product Details</th>
+                <th className="py-4 px-5 w-44 text-center">Status &amp; Actions</th>
+                <th className="py-4 px-5 w-36">Est. Date</th>
+                <th className="py-4 px-5 w-48">Tracking (FedEx / AZ)</th>
+                <th className="py-4 px-5 w-36">Address</th>
+                <th className="py-4 px-5 w-48">Notes</th>
+                <th className="py-4 px-5 w-36">Account Used</th>
+                <th className="py-4 px-5 w-24 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs text-slate-800">
+            <tbody className="divide-y divide-slate-100 text-sm text-slate-800">
               {isLoading ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-slate-500 font-semibold">
@@ -324,32 +363,33 @@ export function ItemsControlPanel() {
               ) : (
                 filteredItems.map((item) => {
                   const hasError = imageErrors[item.id];
-                  const imgUrl = !hasError ? (item.product_image || item.image_url) : null;
+                  const rawImg = item.product_image || item.image_url;
+                  const imgUrl = !hasError && rawImg ? rawImg : null;
                   return (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                       {/* ID */}
-                      <td className="py-3 px-4 text-center font-mono text-slate-500 font-medium">{item.id}</td>
+                      <td className="py-4 px-5 text-center font-mono text-slate-500 font-semibold text-sm">{item.id}</td>
 
                       {/* Merged Product Details (Image, Qty, Price, Order details) */}
-                      <td className="py-3 px-4 max-w-sm">
-                        <div className="flex items-start gap-3">
+                      <td className="py-4 px-5 max-w-sm">
+                        <div className="flex items-start gap-4">
                           {imgUrl ? (
                             <img
                               src={imgUrl.startsWith("http") ? imgUrl : `${import.meta.env.VITE_API_BASE_URL || ""}${imgUrl}`}
                               alt=""
-                              className="h-11 w-11 rounded-lg object-cover bg-slate-50 border border-slate-100 shrink-0 shadow-xs"
+                              className="h-14 w-14 rounded-xl object-cover bg-slate-50 border border-slate-100 shrink-0 shadow-xs"
                               onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
                             />
                           ) : (
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
-                              <Package className="h-5 w-5 text-slate-400" />
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-slate-100 border border-slate-200">
+                              <Package className="h-6 w-6 text-slate-400" />
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="font-bold text-slate-800 break-words leading-snug text-xs" title={item.label}>
+                            <p className="font-bold text-slate-800 break-words leading-snug text-sm" title={item.label}>
                               {item.label}
                             </p>
-                            <div className="text-[10px] font-normal text-slate-600 mt-1 flex flex-wrap gap-x-2 gap-y-0.5 leading-none">
+                            <div className="text-xs font-normal text-slate-600 mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-none">
                               <span>Qty: <span className="font-bold text-slate-800">{item.quantity}</span></span>
                               <span>•</span>
                               <span>Price: <span className="font-bold text-slate-800">AWG {Math.round(parseFloat(item.unit_price))}</span></span>
@@ -357,7 +397,7 @@ export function ItemsControlPanel() {
                               <span>Total: <span className="font-black text-slate-800">AWG {Math.round(parseFloat(item.line_total))}</span></span>
                             </div>
                             {order && (
-                              <p className="text-[9px] font-normal text-slate-555 mt-1.5 leading-none uppercase">
+                              <p className="text-[10px] font-normal text-slate-500 mt-1.5 leading-none uppercase">
                                 Order #{order.order_number.split("-").pop()?.slice(-4)} • Client: {order.customer.name}
                               </p>
                             )}
@@ -365,14 +405,14 @@ export function ItemsControlPanel() {
                         </div>
                       </td>
 
-                      {/* Merged Status Actions (No top badge, only Green Pill Toggles) */}
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col gap-1 w-full max-w-[140px] mx-auto">
+                      {/* Merged Status Actions */}
+                      <td className="py-4 px-5">
+                        <div className="flex flex-col gap-1.5 w-full max-w-[150px] mx-auto">
                           <button
                             type="button"
                             onClick={() => handleInlineChange(item.id, { is_in_myus: !item.is_in_myus })}
                             className={cn(
-                              "flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer leading-none",
+                              "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black uppercase tracking-wider transition-all cursor-pointer leading-none",
                               item.is_in_myus
                                 ? "bg-emerald-50 border-emerald-250 text-emerald-700 shadow-xs"
                                 : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
@@ -384,7 +424,7 @@ export function ItemsControlPanel() {
                             type="button"
                             onClick={() => handleInlineChange(item.id, { is_ready_for_pickup: !item.is_ready_for_pickup })}
                             className={cn(
-                              "flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer leading-none",
+                              "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black uppercase tracking-wider transition-all cursor-pointer leading-none",
                               item.is_ready_for_pickup
                                 ? "bg-emerald-50 border-emerald-250 text-emerald-700 shadow-xs"
                                 : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
@@ -396,7 +436,7 @@ export function ItemsControlPanel() {
                             type="button"
                             onClick={() => handleInlineChange(item.id, { is_delivered: !item.is_delivered })}
                             className={cn(
-                              "flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer leading-none",
+                              "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black uppercase tracking-wider transition-all cursor-pointer leading-none",
                               item.is_delivered
                                 ? "bg-emerald-50 border-emerald-250 text-emerald-700 shadow-xs"
                                 : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
@@ -408,85 +448,81 @@ export function ItemsControlPanel() {
                       </td>
 
                       {/* Est Date */}
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-5">
                         <input
                           type="date"
                           value={item.est_date || ""}
                           onChange={(e) => handleInlineChange(item.id, { est_date: e.target.value || null })}
-                          className="rounded-md border border-slate-200 px-2 py-1 text-[10px] outline-none focus:border-violet-500"
+                          className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs outline-none focus:border-violet-500"
                         />
                       </td>
 
                       {/* Combined FedEx & AZ tracking inputs */}
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col gap-1 w-28">
+                      <td className="py-4 px-5">
+                        <div className="flex flex-col gap-1.5 w-32">
                           <input
                             type="text"
                             placeholder="FedEx TR#"
                             defaultValue={item.fedex_tracking_number || ""}
                             onBlur={(e) => handleInlineChange(item.id, { fedex_tracking_number: e.target.value })}
-                            className="rounded-md border border-slate-200 px-1.5 py-1 text-[10px] outline-none focus:border-violet-500"
+                            className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-violet-500"
                           />
                           <input
                             type="text"
                             placeholder="AZ TR#"
                             defaultValue={item.tracking_number || ""}
                             onBlur={(e) => handleInlineChange(item.id, { tracking_number: e.target.value })}
-                            className="rounded-md border border-slate-200 px-1.5 py-1 text-[10px] outline-none focus:border-violet-500"
+                            className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-violet-500"
                           />
                         </div>
                       </td>
 
-                      {/* Address (Replaced dropdown select with input text) */}
-                      <td className="py-3 px-4">
+                      {/* Address */}
+                      <td className="py-4 px-5">
                         <input
                           type="text"
                           defaultValue={item.address || ""}
                           onBlur={(e) => handleInlineChange(item.id, { address: e.target.value })}
-                          className="rounded-md border border-slate-200 px-2 py-1 text-[11px] w-24 outline-none focus:border-violet-500"
+                          className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs w-28 outline-none focus:border-violet-500"
                         />
                       </td>
 
                       {/* Notes */}
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-5">
                         <input
                           type="text"
                           defaultValue={item.notes || ""}
                           onBlur={(e) => handleInlineChange(item.id, { notes: e.target.value })}
-                          className="rounded-md border border-slate-200 px-2 py-1 text-[11px] w-36 outline-none focus:border-violet-500"
+                          className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs w-40 outline-none focus:border-violet-500"
                         />
                       </td>
 
                       {/* Account Used */}
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-5">
                         <input
                           type="text"
                           defaultValue={item.account_used || ""}
                           onBlur={(e) => handleInlineChange(item.id, { account_used: e.target.value })}
-                          className="rounded-md border border-slate-200 px-2 py-1 text-[11px] w-24 outline-none focus:border-violet-500"
+                          className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs w-28 outline-none focus:border-violet-500"
                         />
                       </td>
 
-                      {/* Action buttons (Moved to very end) */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center justify-center gap-2">
+                      {/* Action buttons */}
+                      <td className="py-4 px-5">
+                        <div className="flex items-center justify-center gap-2.5">
                           <button
                             onClick={() => handleOpenEdit(item)}
-                            className="flex h-7.5 w-7.5 items-center justify-center rounded-lg border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:border-violet-300 shadow-xs transition-all duration-300 hover:scale-[1.05] cursor-pointer"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-100 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:border-violet-300 shadow-xs transition-all duration-300 hover:scale-[1.05] cursor-pointer"
                             title="Edit Item"
                           >
-                            <Edit className="h-3.5 w-3.5" />
+                            <Edit className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => {
-                              if (confirm("Are you sure you want to delete this item?")) {
-                                deleteMutation.mutate(item.id);
-                              }
-                            }}
-                            className="flex h-7.5 w-7.5 items-center justify-center rounded-lg border border-rose-100 bg-rose-50 text-rose-700 hover:bg-rose-150 hover:border-rose-300 shadow-xs transition-all duration-300 hover:scale-[1.05] cursor-pointer"
+                            onClick={() => setDeletingItemId(item.id)}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-rose-100 bg-rose-50 text-rose-700 hover:bg-rose-150 hover:border-rose-300 shadow-xs transition-all duration-300 hover:scale-[1.05] cursor-pointer"
                             title="Delete Item"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -594,45 +630,85 @@ export function ItemsControlPanel() {
               </div>
             ) : (
               /* Manual Input Form Content */
-              <form onSubmit={handleSaveSubmit} className="space-y-4">
+              <form onSubmit={handleSaveSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+
+                {/* Mutation-level error banner */}
+                {saveMutationError && (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700 flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0">⚠</span>
+                    <span>{saveMutationError}</span>
+                  </div>
+                )}
+
                 {/* Description */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase">Item Description *</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase">
+                    Item Description <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    required
                     value={formLabel}
-                    onChange={(e) => setFormLabel(e.target.value)}
+                    onChange={(e) => {
+                      setFormLabel(e.target.value);
+                      if (formErrors.label) setFormErrors(prev => ({ ...prev, label: "" }));
+                    }}
                     placeholder="e.g. MacBook Air M3"
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500"
+                    className={cn(
+                      "w-full rounded-xl border p-2.5 text-xs outline-none transition-colors focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20",
+                      formErrors.label ? "border-rose-400 bg-rose-50/30" : "border-slate-200"
+                    )}
                   />
+                  {formErrors.label && (
+                    <p className="text-[11px] text-rose-500 font-semibold mt-1">{formErrors.label}</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   {/* Quantity */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase">Quantity *</label>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase">
+                      Quantity <span className="text-rose-500">*</span>
+                    </label>
                     <input
                       type="number"
-                      required
                       min={1}
                       value={formQuantity}
-                      onChange={(e) => setFormQuantity(Number(e.target.value))}
-                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500"
+                      onChange={(e) => {
+                        setFormQuantity(Number(e.target.value));
+                        if (formErrors.quantity) setFormErrors(prev => ({ ...prev, quantity: "" }));
+                      }}
+                      className={cn(
+                        "w-full rounded-xl border p-2.5 text-xs outline-none transition-colors focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20",
+                        formErrors.quantity ? "border-rose-400 bg-rose-50/30" : "border-slate-200"
+                      )}
                     />
+                    {formErrors.quantity && (
+                      <p className="text-[11px] text-rose-500 font-semibold mt-1">{formErrors.quantity}</p>
+                    )}
                   </div>
                   {/* Unit Price */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase">Unit Price (AWG) *</label>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase">
+                      Unit Price (USD) <span className="text-rose-500">*</span>
+                    </label>
                     <input
                       type="number"
                       step="0.01"
-                      required
+                      min={0}
                       value={formUnitPrice}
-                      onChange={(e) => setFormUnitPrice(e.target.value)}
+                      onChange={(e) => {
+                        setFormUnitPrice(e.target.value);
+                        if (formErrors.unit_price) setFormErrors(prev => ({ ...prev, unit_price: "" }));
+                      }}
                       placeholder="e.g. 19.50"
-                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500"
+                      className={cn(
+                        "w-full rounded-xl border p-2.5 text-xs outline-none transition-colors focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20",
+                        formErrors.unit_price ? "border-rose-400 bg-rose-50/30" : "border-slate-200"
+                      )}
                     />
+                    {formErrors.unit_price && (
+                      <p className="text-[11px] text-rose-500 font-semibold mt-1">{formErrors.unit_price}</p>
+                    )}
                   </div>
                 </div>
 
@@ -645,7 +721,7 @@ export function ItemsControlPanel() {
                       value={formFedexTracking}
                       onChange={(e) => setFormFedexTracking(e.target.value)}
                       placeholder="FedEx tracking number"
-                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none"
+                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20"
                     />
                   </div>
                   {/* Amazon Tracking */}
@@ -656,7 +732,7 @@ export function ItemsControlPanel() {
                       value={formAzTracking}
                       onChange={(e) => setFormAzTracking(e.target.value)}
                       placeholder="Amazon tracking number"
-                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none"
+                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20"
                     />
                   </div>
                 </div>
@@ -664,17 +740,17 @@ export function ItemsControlPanel() {
                 <div className="grid grid-cols-2 gap-4">
                   {/* Est Date */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase">Est. Date</label>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase">Est. Delivery Date</label>
                     <input
                       type="date"
                       value={formEstDate}
                       onChange={(e) => setFormEstDate(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none"
+                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500"
                     />
                   </div>
                   {/* Address */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase">Address Location</label>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase">Ship-to Address</label>
                     <input
                       type="text"
                       value={formAddress}
@@ -682,29 +758,6 @@ export function ItemsControlPanel() {
                       className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500"
                     />
                   </div>
-                </div>
-
-                {/* Image URL */}
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase">Product Image URL</label>
-                  <input
-                    type="text"
-                    value={formImageUrl}
-                    onChange={(e) => setFormImageUrl(e.target.value)}
-                    placeholder="Optional image url link"
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none"
-                  />
-                </div>
-
-                {/* Notes */}
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase">Notes</label>
-                  <textarea
-                    value={formNotes}
-                    onChange={(e) => setFormNotes(e.target.value)}
-                    rows={2}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none"
-                  />
                 </div>
 
                 {/* Account Used */}
@@ -715,28 +768,105 @@ export function ItemsControlPanel() {
                     value={formAccountUsed}
                     onChange={(e) => setFormAccountUsed(e.target.value)}
                     placeholder="e.g. Randall"
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none"
+                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500"
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saveMutation.isPending}
-                    className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-750 transition-colors cursor-pointer"
-                  >
-                    {saveMutation.isPending ? "Saving..." : "Save Item"}
-                  </button>
+                {/* Product Image URL */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase">Product Image URL <span className="text-slate-400 normal-case font-normal">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={formImageUrl}
+                    onChange={(e) => setFormImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg  (direct image link only)"
+                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500"
+                  />
+                </div>
+
+                {/* Notes */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase">Notes <span className="text-slate-400 normal-case font-normal">(optional)</span></label>
+                  <textarea
+                    value={formNotes}
+                    onChange={(e) => setFormNotes(e.target.value)}
+                    rows={2}
+                    placeholder="Any additional notes about this item..."
+                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-violet-500 resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                  <p className="text-[10px] text-slate-400"><span className="text-rose-400">*</span> Required fields</p>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setModalOpen(false); resetForm(); }}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saveMutation.isPending}
+                      className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2 text-xs font-bold text-white hover:bg-violet-700 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {saveMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        editingItem ? "Update Item" : "Save Item"
+                      )}
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CENTERED DELETE CONFIRMATION DIALOG */}
+      {deletingItemId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600 mb-4">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Delete Order Item</h3>
+              <p className="text-xs text-slate-555 mb-6 leading-relaxed">
+                Are you sure you want to delete this item? This action cannot be undone.
+              </p>
+              <div className="flex w-full gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeletingItemId(null)}
+                  className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => {
+                    deleteMutation.mutate(deletingItemId);
+                  }}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-700 transition-colors cursor-pointer disabled:opacity-60"
+                >
+                  {deleteMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
