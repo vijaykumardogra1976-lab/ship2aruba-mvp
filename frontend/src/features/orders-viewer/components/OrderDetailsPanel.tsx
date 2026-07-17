@@ -88,7 +88,7 @@ export function OrderDetailsPanel({
   }
 
   return (
-    <div className="flex flex-col w-full bg-white rounded-b-xl">
+    <div className="flex flex-col w-full bg-white rounded-b-xl animate-order-details-open">
       {/* 4-column Grid Layout */}
       <div className="grid grid-cols-4 gap-8 px-8 py-7">
         

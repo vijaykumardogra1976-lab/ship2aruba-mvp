@@ -109,13 +109,13 @@ export function OrdersTable({
       <div className="w-full overflow-x-auto">
         <table className="w-full min-w-[900px] border-collapse text-left">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50">
-              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Order ID</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Customer</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Order</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Finances (AWG)</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Placed By</th>
-              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+            <tr className="border-b border-slate-100 bg-slate-50/50 border-l-4 border-transparent">
+              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 w-[10%]">Order ID</th>
+              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 w-[24%]">Customer</th>
+              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 w-[16%]">Order</th>
+              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 w-[20%]">Finances (AWG)</th>
+              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 w-[15%]">Placed By</th>
+              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 w-[15%]">Status</th>
               <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 w-12"></th>
             </tr>
           </thead>
@@ -271,21 +271,21 @@ export function OrdersTable({
                                 });
                               }}
                               className={cn(
-                                "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-bold transition-colors text-left cursor-pointer select-none whitespace-nowrap",
+                                "flex items-center gap-1.5 rounded-md p-0.5 text-xs font-semibold transition-colors text-left cursor-pointer select-none whitespace-nowrap",
                                 checked
                                   ? `${color} bg-transparent`
-                                  : "text-slate-600 hover:text-slate-800"
+                                  : "text-slate-650 hover:text-slate-900"
                               )}
                             >
                               {/* Checkbox icon */}
                               {checked ? (
-                                <svg className="h-4.5 w-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                                   <rect x="3" y="3" width="18" height="18" rx="4" className="fill-current opacity-10" />
-                                  <path d="M9 11.5l2 2 4.5-4.5" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+                                  <path d="M9 11.5l2 2 4.5-4.5" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" />
                                   <rect x="3" y="3" width="18" height="18" rx="4" />
                                 </svg>
                               ) : (
-                                <svg className="h-4.5 w-4.5 shrink-0 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <svg className="h-7 w-7 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                   <rect x="3" y="3" width="18" height="18" rx="4" />
                                 </svg>
                               )}
@@ -304,8 +304,8 @@ export function OrdersTable({
                     </td>
                   </tr>
                   {isSelected && (
-                    <tr>
-                      <td colSpan={7} className="p-0 bg-white border-b-2 border-violet-200 shadow-md">
+                    <tr className="border-l-4 border-violet-600 bg-white">
+                      <td colSpan={7} className="p-0 border-b-2 border-violet-200 shadow-md">
                         <OrderDetailsPanel
                             order={order}
                             onClose={() => onSelectOrder?.(null)}

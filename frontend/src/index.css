@@ -162,3 +162,22 @@ input[type="number"] {
 .otp-resend-row { margin-top: 1rem; text-align: center; font-size: 0.875rem; }
 .otp-resend-timer { font-weight: 500; color: #6B7280; }
 .otp-resend-btn { background: transparent; border: none; padding: 0; cursor: pointer; font-family: inherit; }
+
+/* Custom smooth accordion-style slide down and fade in for selected order details */
+@keyframes orderDetailsSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 800px;
+  }
+}
+
+.animate-order-details-open {
+  animation: orderDetailsSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
