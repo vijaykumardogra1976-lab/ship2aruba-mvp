@@ -84,11 +84,10 @@ export function ClientOrderDetailPage() {
   const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
   const hasDue = parseFloat(order.remaining_balance) > 0;
 
-  // Format money helper
   const formatMoney = (valStr: string | number) => {
     const val = typeof valStr === "string" ? parseFloat(valStr) : valStr;
-    if (isNaN(val)) return "0";
-    return val % 1 === 0 ? val.toFixed(0) : val.toFixed(2);
+    if (isNaN(val)) return "0.00";
+    return val.toFixed(2);
   };
 
   // Helper to generate dynamic timestamps for timeline relative to created_at/order_date

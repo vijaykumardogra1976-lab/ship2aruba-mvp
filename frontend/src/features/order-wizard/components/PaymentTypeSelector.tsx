@@ -16,6 +16,23 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
   const paymentMethod = watch("payment_method");
 
   const paymentAmountField = register("payment_amount");
+  const paidAmountField = register("paid_amount");
+
+  const handleDecimalInput = (e: React.FormEvent<HTMLInputElement>) => {
+    let val = e.currentTarget.value;
+    const originalVal = val;
+    val = val.replace(/[^0-9.]/g, '');
+    const parts = val.split('.');
+    if (parts.length > 2) {
+      val = parts[0] + '.' + parts.slice(1).join('');
+    }
+    if (parts.length === 2 && parts[1].length > 2) {
+      val = parts[0] + '.' + parts[1].slice(0, 2);
+    }
+    if (originalVal !== val) {
+      e.currentTarget.value = val;
+    }
+  };
 
   /**
    * ONE PAYMENT:
@@ -36,13 +53,14 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
     if (!Number.isNaN(amount)) {
       if (paymentType === "one") {
         // items_total = payment_amount (same for one payment — set silently for backend)
-        setValue("items_total", amount === 0 ? "" : amount, {
+        const total = Number(amount.toFixed(2));
+        setValue("items_total", total === 0 ? "" : total, {
           shouldValidate: true,
           shouldDirty: true,
         });
       } else {
         // TWO PAYMENTS: items_total = payment_amount * 2
-        const total = amount * 2;
+        const total = Number((amount * 2).toFixed(2));
         setValue("items_total", total === 0 ? "" : total, {
           shouldValidate: true,
           shouldDirty: true,
@@ -71,7 +89,8 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
     const amt = paymentAmount === "" ? 0 : Number(paymentAmount);
     if (!Number.isNaN(amt)) {
       if (type === "one") {
-        setValue("items_total", amt === 0 ? "" : amt, {
+        const total = Number(amt.toFixed(2));
+        setValue("items_total", total === 0 ? "" : total, {
           shouldValidate: true,
           shouldDirty: true,
         });
@@ -81,7 +100,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
           setValue("paid_amount", amt, { shouldValidate: true, shouldDirty: true });
         }
       } else {
-        const total = amt * 2;
+        const total = Number((amt * 2).toFixed(2));
         setValue("items_total", total === 0 ? "" : total, {
           shouldValidate: true,
           shouldDirty: true,
@@ -102,7 +121,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
 
   const formatCurrency = (val: string | number) => {
     const num = Number(val);
-    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
+    return Number.isNaN(num) ? "0.00 AWG" : `${num.toFixed(2)} AWG`;
   };
 
   // Balance Due calculation
@@ -211,6 +230,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                 step="0.01"
                 placeholder="Enter invoice amount"
                 {...paymentAmountField}
+                onInput={handleDecimalInput}
                 onChange={(event) => {
                   paymentAmountField.onChange(event);
                   handlePaymentAmountChange(event.target.value);
@@ -261,6 +281,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
                     handlePaidAmountChange(event.target.value);
                   },
                 })}
+                onInput={handleDecimalInput}
                 className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>

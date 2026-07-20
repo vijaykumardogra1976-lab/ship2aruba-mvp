@@ -95,6 +95,17 @@ export async function deleteOrder(orderId: number) {
   await api.delete(`/orders/${orderId}/`);
 }
 
+export async function updateOrderNotes(
+  orderId: number,
+  payload: { internal_notes?: string; client_notes?: string }
+) {
+  const { data } = await api.patch<OrderListItem>(
+    `/orders/${orderId}/notes/`,
+    payload
+  );
+  return data;
+}
+
 export async function uploadOrderPdf(orderId: number, file: File) {
   const formData = new FormData();
   formData.append("file", file);

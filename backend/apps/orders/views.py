@@ -123,6 +123,23 @@ class OrderEditView(APIView):
         return Response(OrderListSerializer(order, context={"request": request}).data)
 
 
+class OrderNotesView(APIView):
+    permission_classes = [IsStaffUser]
+
+    def patch(self, request, pk):
+        from apps.orders.serializers import OrderNotesSerializer
+        
+        order = get_object_or_404(
+            Order.objects.select_related("customer", "created_by", "document", "invoice"),
+            pk=pk,
+        )
+        serializer = OrderNotesSerializer(order, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        return Response(OrderListSerializer(order, context={"request": request}).data)
+
+
 class OrderUploadPdfView(APIView):
     """
     Accept a PDF or image document upload for an order.

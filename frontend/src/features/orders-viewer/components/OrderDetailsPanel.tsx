@@ -6,12 +6,15 @@ import {
   Package,
   Edit3,
   Loader2,
+  Check,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OrderListItem } from "../types";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { getOrderItems } from "../api/ordersViewerApi";
+import { getOrderItems, updateOrderNotes } from "../api/ordersViewerApi";
+import { useState, useEffect } from "react";
 
 interface OrderDetailsPanelProps {
   order: OrderListItem | null;
@@ -31,7 +34,7 @@ function getStatusBadge(order: OrderListItem) {
     return { label: "In MyUS", classes: "bg-blue-55/10 text-blue-750 border-blue-200" };
   }
   if (order.is_uploaded) {
-    return { label: "Uploaded", classes: "bg-teal-55/10 text-teal-750 border-teal-200" };
+    return { label: "Uploaded", classes: "bg-amber-50 text-amber-700 border-amber-200" };
   }
   if (order.is_az_ordered) {
     return { label: "AZ Ordered", classes: "bg-violet-55/10 text-violet-750 border-violet-200" };
@@ -46,7 +49,7 @@ function getStatusBadge(order: OrderListItem) {
 
 function formatCurrencyInt(value: number | string, currency = "AWG"): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
-  return `${Math.round(num).toLocaleString("en-US")} ${currency}`;
+  return `${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 }
 
 export function OrderDetailsPanel({
@@ -58,6 +61,27 @@ export function OrderDetailsPanel({
   onPrintReceipt,
 }: OrderDetailsPanelProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [internalNotes, setInternalNotes] = useState("");
+  const [clientNotes, setClientNotes] = useState("");
+
+  useEffect(() => {
+    if (order) {
+      setInternalNotes(order.internal_notes || "");
+      setClientNotes(order.client_notes || "");
+      setIsEditingNotes(false);
+    }
+  }, [order?.id, order?.internal_notes, order?.client_notes]);
+
+  const notesMutation = useMutation({
+    mutationFn: () => updateOrderNotes(order!.id, { internal_notes: internalNotes, client_notes: clientNotes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setIsEditingNotes(false);
+    },
+  });
 
   if (!order) return null;
 
@@ -211,18 +235,92 @@ export function OrderDetailsPanel({
         </div>
 
         {/* Column 4: Notes */}
-        <div className="space-y-5 border-l border-slate-100 pl-8">
-          <h4 className="flex items-center gap-2 font-bold text-slate-800 text-base border-b border-slate-100 pb-3">
-            <FileText className="h-5 w-5 text-slate-600" />
-            Notes
-          </h4>
-          <div className="text-sm text-slate-500 mt-2">
-             {notes ? (
-                <p className="whitespace-pre-wrap leading-relaxed">{notes}</p>
-             ) : (
-                <p className="italic text-slate-400">No notes available.</p>
-             )}
+        <div className="border-l border-slate-100 pl-8 relative flex flex-col">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 shrink-0">
+            <h4 className="flex items-center gap-2 font-bold text-slate-800 text-base">
+              <FileText className="h-5 w-5 text-slate-600" />
+              Notes
+            </h4>
+            {!isEditingNotes ? (
+              <button
+                onClick={() => setIsEditingNotes(true)}
+                className="text-slate-400 hover:text-violet-600 transition"
+                title="Edit Notes"
+              >
+                <Edit3 className="h-4 w-4" />
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => notesMutation.mutate()}
+                  disabled={notesMutation.isPending}
+                  className="text-emerald-600 hover:bg-emerald-50 p-1 rounded transition disabled:opacity-50"
+                  title="Save Notes"
+                >
+                  {notesMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                </button>
+                <button
+                  onClick={() => {
+                    setInternalNotes(order.internal_notes || "");
+                    setClientNotes(order.client_notes || "");
+                    setIsEditingNotes(false);
+                  }}
+                  disabled={notesMutation.isPending}
+                  className="text-rose-600 hover:bg-rose-50 p-1 rounded transition disabled:opacity-50"
+                  title="Cancel"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
+          
+          {!isEditingNotes ? (
+            <div 
+              className="text-sm text-slate-500 mt-0 cursor-pointer group flex-1 flex flex-col"
+              onClick={() => setIsEditingNotes(true)}
+            >
+              {order.client_notes || order.internal_notes ? (
+                <div className="flex flex-col flex-1 gap-3">
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 shrink-0">Client Notes</h5>
+                    <div className="flex-1 overflow-y-auto scrollbar-thin">
+                      <p className="whitespace-pre-wrap leading-relaxed group-hover:text-slate-700 transition text-slate-600">{order.client_notes}</p>
+                    </div>
+                  </div>
+                  <div className="flex-1 flex flex-col min-h-0 border-t border-slate-100 pt-3">
+                    <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 shrink-0">Staff Notes</h5>
+                    <div className="flex-1 overflow-y-auto scrollbar-thin">
+                      <p className="whitespace-pre-wrap leading-relaxed group-hover:text-slate-700 transition text-slate-600">{order.internal_notes}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                  <p className="italic text-slate-400 group-hover:text-slate-500 transition">Click to add notes.</p>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col flex-1 gap-3 mt-0">
+              <div className="flex flex-col flex-1 min-h-[80px]">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Client Notes</label>
+                <textarea
+                  value={clientNotes}
+                  onChange={(e) => setClientNotes(e.target.value)}
+                  className="w-full flex-1 text-sm border-slate-200 rounded-lg p-2 focus:border-violet-500 focus:ring-violet-500 resize-none shadow-sm min-h-0"
+                  placeholder="Notes visible to client..."
+                />
+              </div>
+              <div className="flex flex-col flex-1 min-h-[80px]">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Staff Notes</label>
+                <textarea
+                  value={internalNotes}
+                  onChange={(e) => setInternalNotes(e.target.value)}
+                  className="w-full flex-1 text-sm border-slate-200 rounded-lg p-2 focus:border-violet-500 focus:ring-violet-500 resize-none shadow-sm min-h-0"
+                  placeholder="Private staff notes..."
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

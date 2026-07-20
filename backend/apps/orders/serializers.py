@@ -194,6 +194,12 @@ class OrderEditSerializer(serializers.Serializer):
         return attrs
 
 
+class OrderNotesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ("internal_notes", "client_notes")
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem

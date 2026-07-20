@@ -61,9 +61,9 @@ export function NotesSection({ form }: NotesSectionProps) {
   };
 
   const formatCurrency = (val: string | number | undefined | null) => {
-    if (val === undefined || val === null || val === "") return "0 AWG";
+    if (val === undefined || val === null || val === "") return "0.00 AWG";
     const num = Number(val);
-    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
+    return Number.isNaN(num) ? "0.00 AWG" : `${num.toFixed(2)} AWG`;
   };
 
   const formatDate = (dateStr: string) => {

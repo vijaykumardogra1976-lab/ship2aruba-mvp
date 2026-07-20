@@ -116,7 +116,7 @@ export function SuccessDialog({
               <div className="min-w-0">
                 <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider block leading-none">Total Amount</span>
                 <span className="text-[11px] font-bold text-amber-600 block mt-1 truncate max-w-full">
-                  {createdOrder?.items_total ? `${Math.round(Number(createdOrder.items_total))} AWG` : "-"}
+                  {createdOrder?.items_total ? `${Number(createdOrder.items_total).toFixed(2)} AWG` : "-"}
                 </span>
               </div>
             </div>

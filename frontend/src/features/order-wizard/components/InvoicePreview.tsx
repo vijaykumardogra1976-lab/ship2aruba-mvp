@@ -14,9 +14,9 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   };
 
   const formatInt = (val: string | number | undefined | null) => {
-    if (val === undefined || val === null || val === "") return "0";
+    if (val === undefined || val === null || val === "") return "0.00";
     const num = Number(val);
-    return Number.isNaN(num) ? String(val).replace(/\.00$/, "") : Math.round(num).toString();
+    return Number.isNaN(num) ? String(val) : num.toFixed(2);
   };
 
   const issuedDate = getFormattedDate(invoice.issued_at);

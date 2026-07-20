@@ -38,11 +38,11 @@ const editOrderSchema = z.object({
   items_total: z
     .string()
     .min(1, "Items total is required")
-    .regex(/^\d+$/, "Only positive integers are allowed (no alphabets, decimals, or symbols)"),
+    .regex(/^\d+(\.\d{1,2})?$/, "Only positive numbers with up to 2 decimals are allowed"),
   amount_usd: z
     .string()
     .min(1, "Amazon cost is required")
-    .regex(/^\d+$/, "Only positive integers are allowed (no alphabets, decimals, or symbols)"),
+    .regex(/^\d+(\.\d{1,2})?$/, "Only positive numbers with up to 2 decimals are allowed"),
   order_date: z.string().min(1, "Order date is required"),
   authorization_password: z.string().min(1, "Authorization password is required"),
 });
@@ -136,7 +136,7 @@ export function OrderActionModals({
     if (action === "payment" && order) {
       paymentForm.reset({
         payment_date: getLocalDateString(),
-        amount: Math.round(parseFloat(order.remaining_balance)).toString(),
+        amount: parseFloat(order.remaining_balance).toFixed(2),
         payment_method: "cash",
       });
     }
@@ -230,7 +230,7 @@ export function OrderActionModals({
                 id="items_total"
                 {...editForm.register("items_total")}
                 onKeyPress={(e) => {
-                  if (!/[0-9]/.test(e.key)) {
+                  if (!/[0-9.]/.test(e.key)) {
                     e.preventDefault();
                   }
                 }}
@@ -247,7 +247,7 @@ export function OrderActionModals({
                 id="amount_usd"
                 {...editForm.register("amount_usd")}
                 onKeyPress={(e) => {
-                  if (!/[0-9]/.test(e.key)) {
+                  if (!/[0-9.]/.test(e.key)) {
                     e.preventDefault();
                   }
                 }}
@@ -489,13 +489,13 @@ export function OrderActionModals({
               <Label htmlFor="amount" className="text-[10px] font-medium text-slate-900 uppercase tracking-wider">Amount (AWG)</Label>
               <Input
                 id="amount"
-                value={Math.round(parseFloat(order?.remaining_balance ?? "0"))}
+                value={parseFloat(order?.remaining_balance ?? "0").toFixed(2)}
                 readOnly
                 className="h-9 text-xs border-slate-200 bg-slate-50 text-slate-900 cursor-not-allowed font-medium"
               />
               <input
                 type="hidden"
-                value={Math.round(parseFloat(order?.remaining_balance ?? "0"))}
+                value={parseFloat(order?.remaining_balance ?? "0").toFixed(2)}
                 {...paymentForm.register("amount")}
               />
               {paymentForm.formState.errors.amount && (
@@ -562,7 +562,7 @@ export function OrderActionModals({
                         </p>
                       </div>
                       <span className="font-extrabold text-emerald-600">
-                        +{Math.round(parseFloat(p.amount))} AWG
+                        +{parseFloat(p.amount).toFixed(2)} AWG
                       </span>
                     </div>
                   ))}

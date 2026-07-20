@@ -60,6 +60,27 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
   const websiteType = watch("website_type");
   const [dragActive, setDragActive] = useState(false);
 
+  const handleIntegerInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const val = e.currentTarget.value.replace(/[^0-9]/g, '');
+    if (e.currentTarget.value !== val) e.currentTarget.value = val;
+  };
+
+  const handleDecimalInput = (e: React.FormEvent<HTMLInputElement>) => {
+    let val = e.currentTarget.value;
+    const originalVal = val;
+    val = val.replace(/[^0-9.]/g, '');
+    const parts = val.split('.');
+    if (parts.length > 2) {
+      val = parts[0] + '.' + parts.slice(1).join('');
+    }
+    if (parts.length === 2 && parts[1].length > 2) {
+      val = parts[0] + '.' + parts[1].slice(0, 2);
+    }
+    if (originalVal !== val) {
+      e.currentTarget.value = val;
+    }
+  };
+
   // Auto-fill order date with today on mount (if not already set)
   useEffect(() => {
     const currentDate = form.getValues("order_date");
@@ -236,6 +257,7 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
                 min={1}
                 placeholder="Enter number of items"
                 {...register("number_of_items")}
+                onInput={handleIntegerInput}
                 className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-8.5 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>
@@ -257,6 +279,7 @@ export function WebsiteSelector({ form, pdfFile, onPdfFileChange }: WebsiteSelec
                 step="0.01"
                 placeholder="Enter amount"
                 {...register("amount_usd")}
+                onInput={handleDecimalInput}
                 className="h-8.5 w-full rounded-lg border border-slate-200 bg-white pl-3 pr-3 text-xs text-slate-900 focus:border-violet-500 focus:outline-hidden focus:ring-1 focus:ring-violet-100"
               />
             </div>

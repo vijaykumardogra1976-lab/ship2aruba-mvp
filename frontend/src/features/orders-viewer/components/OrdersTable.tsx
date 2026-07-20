@@ -68,7 +68,7 @@ function formatOrderDateAndTime(dateStr: string) {
 
 function formatCurrencyInt(value: number | string): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
-  return `${Math.round(num).toLocaleString("en-US")}`;
+  return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export function OrdersTable({
@@ -209,7 +209,7 @@ export function OrdersTable({
                         {order.amount_usd && parseFloat(order.amount_usd) > 0 && (
                           <div className="flex items-center gap-1.5 ml-6">
                             <span className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Cost:</span>
-                            <span className="text-sm font-bold text-slate-700">${Math.round(parseFloat(order.amount_usd))}</span>
+                            <span className="text-sm font-bold text-slate-700">${parseFloat(order.amount_usd).toFixed(2)}</span>
                           </div>
                         )}
                       </div>
@@ -254,7 +254,7 @@ export function OrdersTable({
                       <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                         {([
                           { field: "is_az_ordered" as OrderStatusField, label: "AZ Ordered", color: "text-violet-600" },
-                          { field: "is_uploaded" as OrderStatusField, label: "Uploaded", color: "text-teal-600" },
+                          { field: "is_uploaded" as OrderStatusField, label: "Uploaded", color: "text-amber-500" },
                           { field: "is_in_myus" as OrderStatusField, label: "In MyUS", color: "text-blue-600" },
                           { field: "is_completed" as OrderStatusField, label: "Completed", color: "text-emerald-600" },
                         ]).map(({ field, label, color }) => {

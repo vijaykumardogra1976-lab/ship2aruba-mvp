@@ -392,9 +392,9 @@ export function ItemsControlPanel() {
                             <div className="text-xs font-normal text-slate-600 mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-none">
                               <span>Qty: <span className="font-bold text-slate-800">{item.quantity}</span></span>
                               <span>•</span>
-                              <span>Price: <span className="font-bold text-slate-800">AWG {Math.round(parseFloat(item.unit_price))}</span></span>
+                              <span>Price: <span className="font-bold text-slate-800">AWG {parseFloat(item.unit_price).toFixed(2)}</span></span>
                               <span>•</span>
-                              <span>Total: <span className="font-black text-slate-800">AWG {Math.round(parseFloat(item.line_total))}</span></span>
+                              <span>Total: <span className="font-black text-slate-800">AWG {parseFloat(item.line_total).toFixed(2)}</span></span>
                             </div>
                             {order && (
                               <p className="text-[10px] font-normal text-slate-500 mt-1.5 leading-none uppercase">

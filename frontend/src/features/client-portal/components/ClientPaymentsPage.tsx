@@ -64,11 +64,11 @@ export function ClientPaymentsPage() {
   const totalPaid = history.reduce((sum, p) => sum + parseFloat(p.amount), 0);
   const totalPaymentsCount = history.length;
   
-  // Format helpers to strip .00
+  // Format helpers
   const formatMoney = (valStr: string | number) => {
     const val = typeof valStr === "string" ? parseFloat(valStr) : valStr;
-    if (isNaN(val)) return "0";
-    return val % 1 === 0 ? val.toFixed(0) : val.toFixed(2);
+    if (isNaN(val)) return "0.00";
+    return val.toFixed(2);
   };
 
   return (

@@ -10,6 +10,7 @@ from apps.orders.views import (
     OrderPaymentListCreateView,
     OrderStatusToggleView,
     OrderUploadPdfView,
+    OrderNotesView,
 )
 
 urlpatterns = [
@@ -21,5 +22,6 @@ urlpatterns = [
     path("<int:pk>/upload-pdf/", OrderUploadPdfView.as_view(), name="order-upload-pdf"),
     path("<int:pk>/items/", OrderItemListView.as_view(), name="order-items"),
     path("items/<int:pk>/", OrderItemDetailView.as_view(), name="order-item-detail"),
+    path("<int:pk>/notes/", OrderNotesView.as_view(), name="order-notes"),
     path("<int:pk>/payments/", OrderPaymentListCreateView.as_view(), name="order-payments"),
 ]

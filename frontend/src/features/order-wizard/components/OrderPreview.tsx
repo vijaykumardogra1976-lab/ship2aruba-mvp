@@ -48,9 +48,9 @@ export function OrderPreview({ form }: OrderPreviewProps) {
   const remaining = Math.max(0, computedItemsTotal - Number(v.paid_amount || 0));
 
   const formatCurrency = (val: string | number | undefined | null) => {
-    if (val === undefined || val === null || val === "") return "0 AWG";
+    if (val === undefined || val === null || val === "") return "0.00 AWG";
     const num = Number(val);
-    return Number.isNaN(num) ? "0 AWG" : `${Math.round(num)} AWG`;
+    return Number.isNaN(num) ? "0.00 AWG" : `${num.toFixed(2)} AWG`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -93,7 +93,7 @@ export function OrderPreview({ form }: OrderPreviewProps) {
           <PreviewRow
             icon={DollarSign}
             label="Amount in USD"
-            value={v.amount_usd !== "" ? `${Math.round(Number(v.amount_usd))}` : "-"}
+            value={v.amount_usd !== "" ? `${Number(v.amount_usd).toFixed(2)}` : "-"}
           />
         </div>
 
