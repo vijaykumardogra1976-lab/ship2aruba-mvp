@@ -95,9 +95,7 @@ export function OrderDetailsPanel({
   const statusInfo = getStatusBadge(order);
   const balanceVal = parseFloat(order.remaining_balance);
 
-  const notes = [order.internal_notes, order.client_notes]
-    .filter(Boolean)
-    .join("\n\n");
+
 
   // Compute partial payment state for the badge
   const isPartiallyPaid = balanceVal > 0 && parseFloat(order.paid_amount) > 0;

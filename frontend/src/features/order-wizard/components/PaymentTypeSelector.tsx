@@ -16,7 +16,7 @@ export function PaymentTypeSelector({ form }: PaymentTypeSelectorProps) {
   const paymentMethod = watch("payment_method");
 
   const paymentAmountField = register("payment_amount");
-  const paidAmountField = register("paid_amount");
+
 
   const handleDecimalInput = (e: React.FormEvent<HTMLInputElement>) => {
     let val = e.currentTarget.value;
